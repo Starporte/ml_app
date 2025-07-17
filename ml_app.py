@@ -1,83 +1,110 @@
+# Je vous crée un template "Teachable Machine-like"
 import streamlit as st
 import pandas as pd
-import numpy as np
+import plotly.express as px
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 
-st.title("🤖 ML pour Business - Formation 40 min")
-st.write("Analyse prédictive simple sans librairies complexes")
+st.title("🎯 AutoML pour Business - Comme Teachable Machine")
 
-# Upload de données
-uploaded_file = st.file_uploader("Chargez vos données CSV", type=['csv'])
+# Interface exactement comme Teachable Machine
+uploaded_file = st.file_uploader(
+    "📁 Upload your data", 
+    type=['csv'],
+    help="Glissez-déposez votre fichier CSV ici"
+)
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
-    st.write("📊 Aperçu des données:")
-    st.dataframe(df.head())
+    st.success("✅ Données chargées avec succès !")
     
-    # Statistiques descriptives
-    st.write("📈 Statistiques:")
-    st.write(df.describe())
+    # Aperçu données
+    with st.expander("👀 Aperçu des données"):
+        st.dataframe(df.head())
     
-    # Sélection des colonnes
-    numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
-    categorical_columns = df.select_dtypes(include=['object']).columns.tolist()
+    # Sélection target (comme Teachable Machine)
+    st.markdown("### 🎯 Que voulez-vous prédire ?")
+    target_col = st.selectbox(
+        "Choisissez la colonne cible :",
+        df.columns,
+        help="C'est ce que votre IA va apprendre à prédire"
+    )
     
-    if categorical_columns:
-        target_column = st.selectbox("Choisissez la colonne à analyser:", categorical_columns)
+    # Sélection features
+    st.markdown("### 📊 En utilisant ces informations :")
+    feature_cols = st.multiselect(
+        "Sélectionnez les variables explicatives :",
+        [col for col in df.columns if col != target_col],
+        default=[col for col in df.columns if col != target_col][:3]
+    )
+    
+    # Bouton magique (comme Teachable Machine)
+    if st.button("🚀 Créer mon modèle IA", type="primary"):
         
-        if target_column and numeric_columns:
-            feature_column = st.selectbox("Choisissez la variable explicative:", numeric_columns)
+        # Spinners pour effet visuel
+        with st.spinner("🤖 L'IA apprend vos données..."):
             
-            # Analyse simple par segmentation
-            if st.button("🔍 Analyser"):
-                st.write(f"📊 Analyse: {feature_column} vs {target_column}")
-                
-                # Segmentation simple
-                segments = df.groupby(target_column)[feature_column].agg(['mean', 'count', 'std']).round(2)
-                st.write("Segments identifiés:")
-                st.dataframe(segments)
-                
-                # Règle de décision simple
-                target_values = df[target_column].unique()
-                if len(target_values) == 2:
-                    group_means = df.groupby(target_column)[feature_column].mean()
-                    threshold = group_means.mean()
-                    
-                    st.write(f"🎯 Règle de décision simple:")
-                    st.write(f"Si {feature_column} > {threshold:.2f} → Prédiction: {group_means.idxmax()}")
-                    st.write(f"Si {feature_column} ≤ {threshold:.2f} → Prédiction: {group_means.idxmin()}")
-                    
-                    # Test de la règle
-                    st.write("🧪 Tester la règle:")
-                    test_value = st.number_input(f"Entrez une valeur pour {feature_column}:")
-                    if test_value:
-                        prediction = group_means.idxmax() if test_value > threshold else group_means.idxmin()
-                        st.success(f"Prédiction: {prediction}")
-                
-                # Visualisation
-                st.write("📈 Visualisation:")
-                chart_data = df.groupby(target_column)[feature_column].mean()
-                st.bar_chart(chart_data)
-
-# Dataset d'exemple
-st.sidebar.markdown("## 📋 Dataset d'exemple")
-if st.sidebar.button("Générer données exemple"):
-    # Créer données exemple
-    np.random.seed(42)
-    sample_data = pd.DataFrame({
-        'age': np.random.randint(20, 65, 100),
-        'income': np.random.randint(30000, 100000, 100),
-        'years_customer': np.random.randint(1, 10, 100)
-    })
-    
-    # Logique pour target (simplifié)
-    sample_data['premium_buyer'] = np.where(
-        (sample_data['income'] > 60000) & (sample_data['years_customer'] > 3), 
-        'yes', 'no'
-    )
-    
-    st.sidebar.download_button(
-        label="📥 Télécharger données exemple",
-        data=sample_data.to_csv(index=False),
-        file_name='customers_example.csv',
-        mime='text/csv'
-    )
+            # ML simplifié
+            X = df[feature_cols]
+            y = df[target_col]
+            
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42
+            )
+            
+            model = RandomForestClassifier(random_state=42)
+            model.fit(X_train, y_train)
+            
+            score = model.score(X_test, y_test)
+            
+        # Résultats (style Teachable Machine)
+        st.success("🎉 Votre modèle IA est prêt !")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("🎯 Précision", f"{score:.1%}")
+        with col2:
+            st.metric("📊 Prédictions testées", len(X_test))
+        
+        # Importance des variables
+        importances = model.feature_importances_
+        feature_importance = pd.DataFrame({
+            'Variable': feature_cols,
+            'Importance': importances
+        }).sort_values('Importance', ascending=False)
+        
+        st.markdown("### 🔍 Variables les plus importantes :")
+        fig = px.bar(
+            feature_importance, 
+            x='Importance', 
+            y='Variable',
+            orientation='h'
+        )
+        st.plotly_chart(fig)
+        
+        # Section prédiction
+        st.markdown("### 🔮 Testez votre modèle :")
+        
+        # Inputs dynamiques pour prédiction
+        prediction_inputs = {}
+        cols = st.columns(len(feature_cols))
+        
+        for i, col in enumerate(feature_cols):
+            if df[col].dtype in ['int64', 'float64']:
+                prediction_inputs[col] = cols[i].number_input(
+                    f"{col}:",
+                    value=float(df[col].mean())
+                )
+            else:
+                prediction_inputs[col] = cols[i].selectbox(
+                    f"{col}:",
+                    df[col].unique()
+                )
+        
+        # Prédiction en temps réel
+        if st.button("🔮 Prédire !"):
+            pred_df = pd.DataFrame([prediction_inputs])
+            prediction = model.predict(pred_df)[0]
+            probability = model.predict_proba(pred_df)[0].max()
+            
+            st.success(f"🎯 Prédiction : **{prediction}** (Confiance: {probability:.1%})")
