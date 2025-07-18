@@ -1,365 +1,290 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import sys
-from io import StringIO
-import traceback
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.datasets import make_regression
+from sklearn.metrics import r2_score
+import sys
+from io import StringIO
 
-# Configuration de la page
+# Configuration
 st.set_page_config(
-    page_title="Test Code Python",
-    page_icon="🐍",
+    page_title="ML Tutorial for Sanofi",
+    page_icon="🧬",
     layout="wide"
 )
 
-# Style CSS simple et efficace
+# CSS simple
 st.markdown("""
 <style>
-    .main-title {
-        color: #1f77b4;
+    .main-header {
+        background: linear-gradient(90deg, #0056b3, #007bff);
+        color: white;
+        padding: 20px;
         text-align: center;
-        padding: 20px 0;
-        border-bottom: 2px solid #1f77b4;
+        border-radius: 10px;
         margin-bottom: 30px;
     }
     
-    .code-section {
+    .step-box {
         background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 20px 0;
-        border-left: 4px solid #28a745;
-    }
-    
-    .output-success {
-        background-color: #d4edda;
-        color: #155724;
+        border-left: 4px solid #007bff;
         padding: 15px;
+        margin: 15px 0;
         border-radius: 5px;
-        border: 1px solid #c3e6cb;
-        margin: 10px 0;
-        font-family: 'Courier New', monospace;
     }
     
-    .output-error {
+    .code-output {
+        background-color: #e8f5e8;
+        border: 1px solid #28a745;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+    
+    .error-output {
         background-color: #f8d7da;
-        color: #721c24;
-        padding: 15px;
+        border: 1px solid #dc3545;
+        padding: 10px;
         border-radius: 5px;
-        border: 1px solid #f5c6cb;
-        margin: 10px 0;
-        font-family: 'Courier New', monospace;
-    }
-    
-    .stTextArea textarea {
-        font-family: 'Courier New', monospace !important;
-        font-size: 14px !important;
+        font-family: monospace;
+        color: #721c24;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Titre principal
-st.markdown('<h1 class="main-title">🐍 Test d\'Exécution Python</h1>', unsafe_allow_html=True)
+# Header
+st.markdown("""
+<div class="main-header">
+    <h1>🧬 Machine Learning Tutorial</h1>
+    <h3>Interactive Drug Discovery Prediction - Sanofi Session</h3>
+</div>
+""", unsafe_allow_html=True)
 
-# Fonction pour exécuter du code Python
-def execute_code(code_string):
-    """Exécute du code Python et retourne le résultat"""
-    # Variables disponibles pour le code
-    available_vars = {
-        'pd': pd,
-        'np': np,
-        'plt': plt,
-        'st': st,
-        'train_test_split': train_test_split,
-        'LinearRegression': LinearRegression,
-        'RandomForestRegressor': RandomForestRegressor,
-        'mean_squared_error': mean_squared_error,
-        'r2_score': r2_score,
-        'make_regression': make_regression
+# Introduction
+st.markdown("""
+## 🎯 What you'll learn in 5 minutes
+
+This **guided tutorial** teaches you machine learning basics through a simple drug discovery example. 
+Each step has **10 lines of code maximum** and runs instantly.
+
+**How it works:** Read the explanation → Run the code → See results → Move to next step
+""")
+
+# Code execution function
+def run_code(code):
+    old_stdout = sys.stdout
+    sys.stdout = captured = StringIO()
+    
+    context = {
+        'pd': pd, 'np': np, 'train_test_split': train_test_split,
+        'LinearRegression': LinearRegression, 'r2_score': r2_score
     }
     
-    # Rediriger stdout pour capturer les print()
-    old_stdout = sys.stdout
-    sys.stdout = captured_output = StringIO()
-    
     try:
-        # Exécuter le code
-        exec(code_string, available_vars)
-        output = captured_output.getvalue()
-        return True, output
+        exec(code, context)
+        output = captured.getvalue()
+        return True, output, context
     except Exception as e:
-        error_msg = f"❌ Erreur: {str(e)}"
-        return False, error_msg
+        return False, str(e), context
     finally:
         sys.stdout = old_stdout
 
-# Interface principale
-st.markdown('<div class="code-section">', unsafe_allow_html=True)
+# Initialize session state
+if 'results' not in st.session_state:
+    st.session_state.results = {}
 
-st.subheader("📝 Écrivez votre code Python ici:")
+# Step 1
+st.markdown('<div class="step-box">', unsafe_allow_html=True)
+st.markdown("### 📊 Step 1: Create Drug Data")
+st.markdown("**What:** Generate synthetic drug properties (molecular weight, solubility) and their effectiveness")
 
-# Zone de code
-code_input = st.text_area(
-    "Code Python",
-    value="""# Exemple avec Machine Learning - modifiez ce code !
-from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
+code1 = st.text_area("Step 1 Code:", value="""# Create synthetic drug data
 import numpy as np
+import pandas as pd
 
-print("🤖 Exemple de Machine Learning avec sklearn")
-print("=" * 50)
+np.random.seed(42)
+molecular_weight = np.random.normal(300, 50, 100)  # Drug weight
+solubility = np.random.normal(0.5, 0.2, 100)      # Water solubility
+effectiveness = (molecular_weight * 0.1 + solubility * 50 + 
+                np.random.normal(0, 5, 100))       # Drug effectiveness
 
-# Créer un dataset synthétique
-X, y = make_regression(n_samples=100, n_features=3, noise=10, random_state=42)
-print(f"Dataset créé: {X.shape[0]} échantillons, {X.shape[1]} variables")
+data = pd.DataFrame({
+    'molecular_weight': molecular_weight,
+    'solubility': solubility, 
+    'effectiveness': effectiveness
+})
 
-# Diviser les données
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-print(f"Données d'entraînement: {X_train.shape[0]} échantillons")
-print(f"Données de test: {X_test.shape[0]} échantillons")
+print("Drug dataset created!")
+print(data.head())""", height=200, key="code1")
 
-# Créer et entraîner le modèle
-model = LinearRegression()
-model.fit(X_train, y_train)
-print("\\n✅ Modèle entraîné!")
-
-# Faire des prédictions
-y_pred = model.predict(X_test)
-
-# Évaluer les performances
-mse = mean_squared_error(y_test, y_pred)
-r2 = r2_score(y_test, y_pred)
-
-print(f"\\n📊 Performances du modèle:")
-print(f"MSE (Mean Squared Error): {mse:.2f}")
-print(f"R² Score: {r2:.4f}")
-
-# Afficher quelques prédictions
-print(f"\\n🔮 Exemples de prédictions:")
-for i in range(min(5, len(y_test))):
-    print(f"Réel: {y_test[i]:.2f}, Prédit: {y_pred[i]:.2f}")""",
-    height=300,
-    help="Écrivez votre code Python ici. Sklearn est disponible !"
-)
+if st.button("▶️ Run Step 1", key="run1"):
+    success, output, context = run_code(code1)
+    st.session_state.results['step1'] = context
+    if success:
+        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Boutons
-col1, col2, col3 = st.columns([2, 1, 1])
+# Step 2
+st.markdown('<div class="step-box">', unsafe_allow_html=True)
+st.markdown("### 🔬 Step 2: Prepare Training Data")
+st.markdown("**What:** Split data into training and testing sets (like testing drugs in lab vs clinic)")
 
-with col1:
-    if st.button("▶️ Exécuter le code", type="primary"):
-        if code_input.strip():
-            success, result = execute_code(code_input)
-            
-            if success:
-                st.markdown("### ✅ Résultat:")
-                st.markdown(f'<div class="output-success">{result}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown("### ❌ Erreur:")
-                st.markdown(f'<div class="output-error">{result}</div>', unsafe_allow_html=True)
-        else:
-            st.warning("Veuillez écrire du code avant d'exécuter!")
-
-with col2:
-    if st.button("🔄 Réinitialiser"):
-        st.rerun()
-
-with col3:
-    if st.button("💡 Exemple"):
-        st.info("Exemple chargé dans la zone de code!")
-
-# Exemples rapides
-st.markdown("---")
-st.subheader("🚀 Exemples rapides à tester:")
-
-examples = {
-    "Régression linéaire": """# Prédiction des prix immobiliers
-from sklearn.datasets import make_regression
+code2 = st.text_area("Step 2 Code:", value="""# Split data for training and testing
 from sklearn.model_selection import train_test_split
+
+# Use data from Step 1 (uncomment if running separately)
+# data = st.session_state.results['step1']['data']
+
+X = data[['molecular_weight', 'solubility']]  # Input features
+y = data['effectiveness']                      # Target to predict
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+
+print(f"Training samples: {len(X_train)}")
+print(f"Testing samples: {len(X_test)}")
+print("Data split completed!")""", height=180, key="code2")
+
+if st.button("▶️ Run Step 2", key="run2"):
+    # Merge previous context
+    if 'step1' in st.session_state.results:
+        code2_with_data = code2.replace("# data = st.session_state.results['step1']['data']", 
+                                       f"data = {st.session_state.results['step1']['data'].to_dict()}")
+        code2_with_data = "data = pd.DataFrame(" + str(st.session_state.results['step1']['data'].to_dict()) + ")\n" + code2
+    else:
+        code2_with_data = code2
+    
+    success, output, context = run_code(code2_with_data)
+    st.session_state.results['step2'] = context
+    if success:
+        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Step 3
+st.markdown('<div class="step-box">', unsafe_allow_html=True)
+st.markdown("### 🤖 Step 3: Train AI Model")
+st.markdown("**What:** Teach the AI to predict drug effectiveness from molecular properties")
+
+code3 = st.text_area("Step 3 Code:", value="""# Train machine learning model
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
-import numpy as np
 
-print("🏠 Prédiction des prix immobiliers")
-print("=" * 40)
-
-# Simuler des données immobilières
-np.random.seed(42)
-superficie = np.random.normal(100, 30, 200)  # Surface en m²
-chambres = np.random.poisson(3, 200)  # Nombre de chambres
-anciennete = np.random.uniform(0, 50, 200)  # Âge du bien
-
-# Prix basé sur ces caractéristiques + bruit
-prix = (superficie * 3000 + chambres * 15000 - anciennete * 500 + 
-        np.random.normal(0, 20000, 200))
-
-# Créer le dataset
-X = np.column_stack([superficie, chambres, anciennete])
-y = prix
-
-# Division train/test
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-
-# Modèle
+# Create and train the model
 model = LinearRegression()
 model.fit(X_train, y_train)
 
-# Prédictions
+print("🎯 Model trained successfully!")
+print(f"Model learned from {len(X_train)} drug samples")
+
+# Show what the model learned
+print("\\nModel insights:")
+print(f"Molecular weight importance: {model.coef_[0]:.3f}")
+print(f"Solubility importance: {model.coef_[1]:.3f}")""", height=160, key="code3")
+
+if st.button("▶️ Run Step 3", key="run3"):
+    success, output, context = run_code(code3)
+    st.session_state.results['step3'] = context
+    if success:
+        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Step 4
+st.markdown('<div class="step-box">', unsafe_allow_html=True)
+st.markdown("### 🔮 Step 4: Make Predictions")
+st.markdown("**What:** Use the trained AI to predict effectiveness of new, unseen drugs")
+
+code4 = st.text_area("Step 4 Code:", value="""# Make predictions on test drugs
+from sklearn.metrics import r2_score
+
+# Predict effectiveness of test drugs
 y_pred = model.predict(X_test)
 
-# Résultats
-print(f"R² Score: {r2_score(y_test, y_pred):.4f}")
-print(f"Erreur moyenne: {mean_squared_error(y_test, y_pred, squared=False):.0f} €")
-
-print("\\n🔮 Exemples de prédictions:")
+print("🔮 Predictions made!")
+print("\\nSample predictions:")
 for i in range(5):
-    print(f"Superficie: {X_test[i][0]:.0f}m², Chambres: {X_test[i][1]:.0f}, Âge: {X_test[i][2]:.0f}ans")
-    print(f"Prix réel: {y_test[i]:.0f}€, Prix prédit: {y_pred[i]:.0f}€")
-    print("-" * 50)""",
+    actual = y_test.iloc[i]
+    predicted = y_pred[i]
+    print(f"Drug {i+1}: Actual={actual:.1f}, Predicted={predicted:.1f}")
 
-    "Classification": """# Classification avec Random Forest
-from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+# Calculate accuracy
+accuracy = r2_score(y_test, y_pred)
+print(f"\\n📊 Model accuracy: {accuracy:.3f} (0=bad, 1=perfect)")""", height=180, key="code4")
+
+if st.button("▶️ Run Step 4", key="run4"):
+    success, output, context = run_code(code4)
+    st.session_state.results['step4'] = context
+    if success:
+        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Step 5
+st.markdown('<div class="step-box">', unsafe_allow_html=True)
+st.markdown("### 🎯 Step 5: Design New Drug")
+st.markdown("**What:** Use your AI model to design a new drug with optimal properties")
+
+code5 = st.text_area("Step 5 Code:", value="""# Design new drug using AI predictions
 import numpy as np
 
-print("🎯 Classification avec Random Forest")
-print("=" * 40)
-
-# Créer un dataset de classification
-X, y = make_classification(n_samples=1000, n_features=10, n_informative=5, 
-                         n_redundant=3, n_clusters_per_class=1, random_state=42)
-
-# Labels pour rendre plus réaliste
-class_names = ['Classe A', 'Classe B']
-print(f"Dataset: {X.shape[0]} échantillons, {X.shape[1]} caractéristiques")
-print(f"Classes: {class_names}")
-
-# Division des données
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Modèle Random Forest
-rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
-rf_model.fit(X_train, y_train)
-
-# Prédictions
-y_pred = rf_model.predict(X_test)
-
-# Évaluation
-accuracy = accuracy_score(y_test, y_pred)
-print(f"\\n📊 Précision du modèle: {accuracy:.4f} ({accuracy*100:.2f}%)")
-
-# Importance des caractéristiques
-feature_importance = rf_model.feature_importances_
-print("\\n🔍 Importance des caractéristiques:")
-for i, importance in enumerate(feature_importance):
-    print(f"Caractéristique {i+1}: {importance:.4f}")
-
-# Exemples de prédictions
-print("\\n🔮 Exemples de prédictions:")
-for i in range(10):
-    predicted_class = class_names[y_pred[i]]
-    actual_class = class_names[y_test[i]]
-    status = "✅" if y_pred[i] == y_test[i] else "❌"
-    print(f"{status} Prédit: {predicted_class}, Réel: {actual_class}")""",
-
-    "Clustering": """# Clustering avec K-Means
-from sklearn.cluster import KMeans
-from sklearn.datasets import make_blobs
-import numpy as np
-
-print("🎪 Clustering avec K-Means")
-print("=" * 30)
-
-# Créer des données avec clusters naturels
-X, y_true = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=42)
-
-print(f"Dataset: {X.shape[0]} points, {X.shape[1]} dimensions")
-print(f"Clusters réels: {len(np.unique(y_true))}")
-
-# Appliquer K-Means
-kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
-y_pred = kmeans.fit_predict(X)
-
-# Centres des clusters
-centers = kmeans.cluster_centers_
-print(f"\\n🎯 Centres des clusters trouvés:")
-for i, center in enumerate(centers):
-    print(f"Cluster {i}: [{center[0]:.2f}, {center[1]:.2f}]")
-
-# Inertie (somme des distances au carré)
-inertia = kmeans.inertia_
-print(f"\\n📊 Inertie du modèle: {inertia:.2f}")
-
-# Analyser les clusters
-print("\\n🔍 Analyse des clusters:")
-for i in range(4):
-    cluster_points = X[y_pred == i]
-    print(f"Cluster {i}: {len(cluster_points)} points")
-    print(f"  Moyenne X: {cluster_points[:, 0].mean():.2f}")
-    print(f"  Moyenne Y: {cluster_points[:, 1].mean():.2f}")
-
-# Comparaison avec les vrais clusters
-from sklearn.metrics import adjusted_rand_score
-ari = adjusted_rand_score(y_true, y_pred)
-print(f"\\n✅ Score ARI (similitude): {ari:.4f}")""",
-
-    "Analyse simple": """# Analyse simple d'un dataset
-import pandas as pd
-import numpy as np
-
-# Créer des données de vente
-np.random.seed(42)
-ventes = np.random.normal(1000, 200, 30)  # 30 jours de ventes
-
-df = pd.DataFrame({
-    'jour': range(1, 31),
-    'ventes': ventes
+# Test different drug compositions
+new_drugs = pd.DataFrame({
+    'molecular_weight': [250, 300, 350, 400],
+    'solubility': [0.3, 0.5, 0.7, 0.9]
 })
 
-print("Données de ventes:")
-print(df.head())
-print(f"\\nVentes moyennes: {df['ventes'].mean():.2f} €")
-print(f"Meilleur jour: Jour {df.loc[df['ventes'].idxmax(), 'jour']} ({df['ventes'].max():.2f} €)")
-print(f"Pire jour: Jour {df.loc[df['ventes'].idxmin(), 'jour']} ({df['ventes'].min():.2f} €)")"""
-}
+# Predict their effectiveness
+predicted_effectiveness = model.predict(new_drugs)
 
-# Afficher les exemples
-for titre, code in examples.items():
-    with st.expander(f"📋 {titre}"):
-        st.code(code, language="python")
-        if st.button(f"Utiliser cet exemple", key=f"use_{titre}"):
-            st.session_state.example_code = code
-            st.rerun()
+print("🧬 New drug candidates:")
+for i, row in new_drugs.iterrows():
+    effectiveness = predicted_effectiveness[i]
+    print(f"Drug {i+1}: Weight={row['molecular_weight']}, "
+          f"Solubility={row['solubility']}, "
+          f"Predicted effectiveness={effectiveness:.1f}")
 
-# Charger l'exemple sélectionné
-if 'example_code' in st.session_state:
-    code_input = st.session_state.example_code
-    del st.session_state.example_code
+best_drug = np.argmax(predicted_effectiveness)
+print(f"\\n🏆 Best candidate: Drug {best_drug + 1}")""", height=200, key="code5")
 
-# Informations sur les limitations
+if st.button("▶️ Run Step 5", key="run5"):
+    success, output, context = run_code(code5)
+    if success:
+        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Conclusion
 st.markdown("---")
-st.info("""
-**🤖 Sklearn disponible - Fonctionnalités ML:**
-- **Régression** : LinearRegression, RandomForestRegressor
-- **Classification** : RandomForestClassifier, LogisticRegression
-- **Clustering** : KMeans, DBSCAN
-- **Métriques** : accuracy_score, r2_score, mean_squared_error
-- **Datasets** : make_regression, make_classification, make_blobs
-- **Preprocessing** : train_test_split, StandardScaler
+st.markdown("""
+## 🎉 Congratulations!
 
-**📚 Bibliothèques disponibles:** pandas, numpy, matplotlib, sklearn
+You just completed a **machine learning drug discovery pipeline** in 5 steps:
+
+1. ✅ **Data Creation** - Generated drug properties
+2. ✅ **Data Preparation** - Split training/testing
+3. ✅ **Model Training** - Taught AI to predict effectiveness  
+4. ✅ **Prediction** - Tested on new drugs
+5. ✅ **Drug Design** - Found optimal candidate
+
+### 🚀 Real Applications at Sanofi:
+- **Molecular property prediction**
+- **Drug-target interaction modeling**
+- **Clinical trial optimization**
+- **Side effect prediction**
+
+*This simplified example demonstrates the core ML workflow used in pharmaceutical research.*
 """)
-
-st.markdown("---")
-st.markdown("*Version de test - Développé avec Streamlit*")
