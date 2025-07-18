@@ -57,14 +57,14 @@ st.markdown("""
 # Header
 st.markdown("""
 <div class="main-header">
-    <h1>🧬 Machine Learning Tutorial</h1>
-    <h3>Interactive Drug Discovery Prediction - Sanofi Session</h3>
+    <h1> You Can DO AI !</h1>
+    <h3>Interactive Adherence Drug Prediction - DLBT Session</h3>
 </div>
 """, unsafe_allow_html=True)
 
 # Introduction
 st.markdown("""
-## 🎯 What you'll learn in 5 minutes
+## 🎯 What you'll learn in 30 minutes
 
 This **guided tutorial** teaches you machine learning basics through a simple drug discovery example. 
 Each step has **10 lines of code maximum** and runs instantly.
