@@ -121,7 +121,7 @@ st.markdown("""
     <h2>The Challenge</h2>
     <p><strong>MyWay</strong> is Sanofi's innovative patient support program that helps patients navigate their treatment journey. However, we face a critical challenge: <strong>50% of patients don't take their medications as prescribed.</strong></p>
     
-    <p>Poor medication adherence leads to:</p>
+    <p><strong>Poor medication adherence leads to:</strong></p>
     <p>• Worsened patient outcomes<br>
     • Increased healthcare costs (€125 billion annually in Europe)<br>
     • Higher hospitalization rates</p>
