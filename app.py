@@ -51,6 +51,15 @@ st.markdown("""
         color: #155724;
         font-family: 'Courier New', monospace;
     }
+    
+    .metric-card {
+        background-color: #f8f9fa;
+        border: 2px solid #28a745;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin: 10px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -378,28 +387,75 @@ if st.session_state.step4:
         st.session_state.accuracy = accuracy
         st.session_state.step5 = True
         
+        # Simple, business-friendly results
+        cm = confusion_matrix(y_test, predictions)
+        tn, fp, fn, tp = cm.ravel()
+        
+        total_patients = len(y_test)
+        correct_predictions = tp + tn
+        wrong_predictions = fp + fn
+        
+        # Calculate simple metrics
+        correctly_predicted_adherent = tp
+        correctly_predicted_non_adherent = tn
+        missed_adherent_patients = fn  # We said no, but they were adherent
+        false_alarms = fp  # We said yes, but they weren't adherent
+        
+        st.markdown("### 📊 AI Performance Results")
+        
+        # Main accuracy metric - large and prominent
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown(f"""
+            <div class="metric-card">
+                <h2 style="color: #28a745; margin: 0;">🎯 {accuracy:.1%}</h2>
+                <h3 style="margin: 5px 0;">Overall Accuracy</h3>
+                <p style="margin: 0; color: #666;">Got {correct_predictions} out of {total_patients} predictions right</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Detailed breakdown in simple terms
         col1, col2 = st.columns(2)
         
         with col1:
-            st.metric("AI Accuracy", f"{accuracy:.1%}")
+            st.markdown("### ✅ What We Got Right")
+            st.metric("✅ Correctly Identified Adherent Patients", f"{correctly_predicted_adherent}")
+            st.metric("✅ Correctly Identified Non-Adherent Patients", f"{correctly_predicted_non_adherent}")
+            st.success(f"**Total Correct:** {correct_predictions} patients")
             
-            # Confusion Matrix
-            cm = confusion_matrix(y_test, predictions)
-            fig = px.imshow(cm, 
-                           labels=dict(x="AI Prediction", y="Reality"),
-                           x=['Not Adherent', 'Adherent'],
-                           y=['Not Adherent', 'Adherent'],
-                           title="Confusion Matrix")
-            st.plotly_chart(fig, use_container_width=True)
+        with col2:
+            st.markdown("### ❌ What We Got Wrong")
+            st.metric("⚠️ Missed Adherent Patients", f"{missed_adherent_patients}")
+            st.metric("🚨 False Alarms", f"{false_alarms}")
+            st.error(f"**Total Wrong:** {wrong_predictions} patients")
+        
+        # Business impact explanation
+        st.markdown("### 💼 Business Impact")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if missed_adherent_patients > 0:
+                st.warning(f"⚠️ **Risk:** {missed_adherent_patients} adherent patients might not get needed support")
+            else:
+                st.success("✅ No adherent patients were missed!")
         
         with col2:
-            # Performance breakdown
-            tn, fp, fn, tp = cm.ravel()
-            st.write(f"**Correct Predictions:** {tp + tn}")
-            st.write(f"**Wrong Predictions:** {fp + fn}")
-            st.write(f"**Total Tests:** {len(y_test)}")
+            if false_alarms > 0:
+                st.info(f"💰 **Cost:** {false_alarms} patients might receive unnecessary interventions")
+            else:
+                st.success("✅ No unnecessary interventions!")
         
-        st.markdown('<div class="success-output">✅ AI achieved {:.1%} accuracy</div>'.format(accuracy), unsafe_allow_html=True)
+        # Overall assessment
+        if accuracy > 0.8:
+            st.success("🎉 **Excellent Performance!** This AI is ready for deployment.")
+        elif accuracy > 0.7:
+            st.warning("⚠️ **Good Performance** - Consider fine-tuning before deployment.")
+        else:
+            st.error("❌ **Needs Improvement** - More training data or different approach needed.")
+        
+        st.markdown('<div class="success-output">✅ AI testing complete - {:.1%} accuracy achieved</div>'.format(accuracy), unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
