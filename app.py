@@ -90,9 +90,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Sanofi Logo
-st.markdown("""
-<img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2ODApLCBxdWFsaXR5ID0gODUK/9sAQwAFAwQEBAMFBAQEBQUFBgcMCAcHBwcPCwsJDBEPEhIRDxERExYcFxMUGhURERghGBodHR8fHxMXIiQiHiQcHh8e/9sAQwEFBQUHBgcOCAgOHhQRFB4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4e/8AAEQgAUABQAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMEAgECBQYGZzCBCyEAATIDBBUFBhIHFwhhCAkiFCsBARACEQMTFjFBMiQIZDVHFyJhgZEVcaGxwUIjNEKCkWJy0bIkM0OhwfDBtTVSgtJj4uvBZIaGdI9t/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEyYXEHgZEiI6GxwRMkQYKS0fAUVHLRovASY3MzNTdEYXOhQ8FP//aAAAwDAQACEQMRAD8A=" class="sanofi-logo" alt="Sanofi Logo">
-""", unsafe_allow_html=True)
+try:
+    st.markdown("""
+    <img src="sanofi_logo.jpg" class="sanofi-logo" alt="Sanofi Logo">
+    """, unsafe_allow_html=True)
+except:
+    pass
 
 # Header with story context
 st.markdown("""
