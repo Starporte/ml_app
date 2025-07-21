@@ -1,24 +1,27 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score
-import sys
-from io import StringIO
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import plotly.express as px
+import plotly.graph_objects as go
 
-# Configuration
+# Configuration de la page
 st.set_page_config(
-    page_title="ML Tutorial for Sanofi",
-    page_icon="🧬",
+    page_title="🏥 Prédiction d'Adhérence Médicamenteuse",
+    page_icon="💊",
     layout="wide"
 )
 
-# CSS simple
+# CSS pour améliorer l'apparence
 st.markdown("""
 <style>
     .main-header {
-        background: linear-gradient(90deg, #0056b3, #007bff);
+        background: linear-gradient(90deg, #1f77b4, #ff7f0e);
         color: white;
         padding: 20px;
         text-align: center;
@@ -28,263 +31,399 @@ st.markdown("""
     
     .step-box {
         background-color: #f8f9fa;
-        border-left: 4px solid #007bff;
+        border-left: 4px solid #1f77b4;
         padding: 15px;
         margin: 15px 0;
         border-radius: 5px;
     }
     
-    .code-output {
-        background-color: #e8f5e8;
+    .metric-card {
+        background-color: #e8f4fd;
+        border: 1px solid #1f77b4;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .success-box {
+        background-color: #d4edda;
         border: 1px solid #28a745;
         padding: 10px;
         border-radius: 5px;
-        font-family: monospace;
-        white-space: pre-wrap;
-    }
-    
-    .error-output {
-        background-color: #f8d7da;
-        border: 1px solid #dc3545;
-        padding: 10px;
-        border-radius: 5px;
-        font-family: monospace;
-        color: #721c24;
+        color: #155724;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Header
+# En-tête principal
 st.markdown("""
 <div class="main-header">
-    <h1> You Can DO AI !</h1>
-    <h3>Interactive Adherence Drug Prediction - DLBT Session</h3>
+    <h1>🏥 Tutoriel : Prédiction d'Adhérence Médicamenteuse</h1>
+    <h3>Apprendre le Machine Learning avec un cas concret</h3>
 </div>
 """, unsafe_allow_html=True)
 
 # Introduction
 st.markdown("""
-## 🎯 What you'll learn in 30 minutes
+## 🎯 Objectif de ce tutoriel
 
-This **guided tutorial** teaches you machine learning basics through a simple drug discovery example. 
-Each step has **10 lines of code maximum** and runs instantly.
+Ce tutoriel vous apprend à **prédire si un patient va bien suivre son traitement** en utilisant le Machine Learning. 
+Nous allons utiliser des données patient simples pour construire un modèle intelligent.
 
-**How it works:** Read the explanation → Run the code → See results → Move to next step
+**Ce que vous allez apprendre :**
+- Comment préparer des données médicales
+- Comment entraîner un modèle de Machine Learning  
+- Comment évaluer les performances du modèle
+- Comment faire des prédictions sur de nouveaux patients
+
+---
 """)
 
-# Code execution function
-def run_code(code):
-    old_stdout = sys.stdout
-    sys.stdout = captured = StringIO()
+# Initialisation des données en session state
+if 'data_generated' not in st.session_state:
+    st.session_state.data_generated = False
+if 'model_trained' not in st.session_state:
+    st.session_state.model_trained = False
+
+# ÉTAPE 1 : Génération des données
+st.markdown('<div class="step-box">', unsafe_allow_html=True)
+st.markdown("### 📊 Étape 1 : Création des données patients")
+st.markdown("""
+**Explication :** Nous allons créer un jeu de données fictif représentant des patients avec :
+- Âge du patient
+- Coût du traitement annuel  
+- Nombre d'effets secondaires
+- Si le patient adhère au traitement (OUI/NON)
+""")
+
+if st.button("🎲 Générer les données patients", key="generate_data"):
+    with st.spinner("Génération des données..."):
+        # Génération des données
+        np.random.seed(42)
+        n_patients = 1000
+        
+        # Variables explicatives
+        age = np.random.normal(65, 15, n_patients)
+        age = np.clip(age, 18, 90)  # Âge entre 18 et 90 ans
+        
+        cout_annuel = np.random.exponential(2000, n_patients)
+        cout_annuel = np.clip(cout_annuel, 500, 8000)  # Coût entre 500€ et 8000€
+        
+        effets_secondaires = np.random.poisson(2, n_patients)
+        effets_secondaires = np.clip(effets_secondaires, 0, 8)  # 0 à 8 effets
+        
+        # Variable cible (adhérence) - logique métier
+        # Plus le patient est jeune, moins d'effets secondaires, coût faible = meilleure adhérence
+        score_adherence = (
+            -0.02 * age +  # Plus jeune = mieux
+            -0.0003 * cout_annuel +  # Moins cher = mieux  
+            -0.5 * effets_secondaires +  # Moins d'effets = mieux
+            np.random.normal(0, 1, n_patients)  # Bruit aléatoire
+        )
+        
+        adherence = (score_adherence > np.median(score_adherence)).astype(int)
+        
+        # Création du DataFrame
+        data = pd.DataFrame({
+            'age': age.round(0).astype(int),
+            'cout_annuel': cout_annuel.round(0).astype(int),
+            'effets_secondaires': effets_secondaires,
+            'adherence': adherence
+        })
+        
+        st.session_state.data = data
+        st.session_state.data_generated = True
     
-    context = {
-        'pd': pd, 'np': np, 'train_test_split': train_test_split,
-        'LinearRegression': LinearRegression, 'r2_score': r2_score
-    }
+    st.success("✅ Données générées avec succès !")
+
+if st.session_state.data_generated:
+    data = st.session_state.data
     
-    try:
-        exec(code, context)
-        output = captured.getvalue()
-        return True, output, context
-    except Exception as e:
-        return False, str(e), context
-    finally:
-        sys.stdout = old_stdout
-
-# Initialize session state
-if 'results' not in st.session_state:
-    st.session_state.results = {}
-
-# Step 1
-st.markdown('<div class="step-box">', unsafe_allow_html=True)
-st.markdown("### 📊 Step 1: Create Drug Data")
-st.markdown("**What:** Generate synthetic drug properties (molecular weight, solubility) and their effectiveness")
-
-code1 = st.text_area("Step 1 Code:", value="""# Create synthetic drug data
-import numpy as np
-import pandas as pd
-
-np.random.seed(42)
-molecular_weight = np.random.normal(300, 50, 100)  # Drug weight
-solubility = np.random.normal(0.5, 0.2, 100)      # Water solubility
-effectiveness = (molecular_weight * 0.1 + solubility * 50 + 
-                np.random.normal(0, 5, 100))       # Drug effectiveness
-
-data = pd.DataFrame({
-    'molecular_weight': molecular_weight,
-    'solubility': solubility, 
-    'effectiveness': effectiveness
-})
-
-print("Drug dataset created!")
-print(data.head())""", height=200, key="code1")
-
-if st.button("▶️ Run Step 1", key="run1"):
-    success, output, context = run_code(code1)
-    st.session_state.results['step1'] = context
-    if success:
-        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Step 2
-st.markdown('<div class="step-box">', unsafe_allow_html=True)
-st.markdown("### 🔬 Step 2: Prepare Training Data")
-st.markdown("**What:** Split data into training and testing sets (like testing drugs in lab vs clinic)")
-
-code2 = st.text_area("Step 2 Code:", value="""# Split data for training and testing
-from sklearn.model_selection import train_test_split
-
-# Use data from Step 1 (uncomment if running separately)
-# data = st.session_state.results['step1']['data']
-
-X = data[['molecular_weight', 'solubility']]  # Input features
-y = data['effectiveness']                      # Target to predict
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=42
-)
-
-print(f"Training samples: {len(X_train)}")
-print(f"Testing samples: {len(X_test)}")
-print("Data split completed!")""", height=180, key="code2")
-
-if st.button("▶️ Run Step 2", key="run2"):
-    # Merge previous context
-    if 'step1' in st.session_state.results:
-        code2_with_data = code2.replace("# data = st.session_state.results['step1']['data']", 
-                                       f"data = {st.session_state.results['step1']['data'].to_dict()}")
-        code2_with_data = "data = pd.DataFrame(" + str(st.session_state.results['step1']['data'].to_dict()) + ")\n" + code2
-    else:
-        code2_with_data = code2
+    # Affichage des données
+    col1, col2 = st.columns(2)
     
-    success, output, context = run_code(code2_with_data)
-    st.session_state.results['step2'] = context
-    if success:
-        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
+    with col1:
+        st.markdown("**Aperçu des données :**")
+        st.dataframe(data.head(10))
+        
+    with col2:
+        st.markdown("**Statistiques :**")
+        adherent_count = data['adherence'].sum()
+        total_count = len(data)
+        
+        st.metric("Total patients", total_count)
+        st.metric("Patients adhérents", f"{adherent_count} ({adherent_count/total_count*100:.1f}%)")
+        st.metric("Patients non-adhérents", f"{total_count-adherent_count} ({(total_count-adherent_count)/total_count*100:.1f}%)")
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Step 3
-st.markdown('<div class="step-box">', unsafe_allow_html=True)
-st.markdown("### 🤖 Step 3: Train AI Model")
-st.markdown("**What:** Teach the AI to predict drug effectiveness from molecular properties")
+# ÉTAPE 2 : Exploration des données
+if st.session_state.data_generated:
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
+    st.markdown("### 🔍 Étape 2 : Explorer les données")
+    st.markdown("""
+    **Explication :** Avant d'entraîner notre modèle, nous devons comprendre nos données.
+    Regardons comment l'âge, le coût et les effets secondaires influencent l'adhérence.
+    """)
+    
+    if st.button("📈 Créer les graphiques d'exploration", key="explore_data"):
+        data = st.session_state.data
+        
+        # Graphiques
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Graphique âge vs adhérence
+            fig1 = px.box(data, x='adherence', y='age', 
+                         labels={'adherence': 'Adhérence (0=Non, 1=Oui)', 'age': 'Âge'},
+                         title="Distribution de l'âge selon l'adhérence")
+            st.plotly_chart(fig1, use_container_width=True)
+            
+        with col2:
+            # Graphique coût vs adhérence  
+            fig2 = px.box(data, x='adherence', y='cout_annuel',
+                         labels={'adherence': 'Adhérence (0=Non, 1=Oui)', 'cout_annuel': 'Coût annuel (€)'},
+                         title="Distribution du coût selon l'adhérence")
+            st.plotly_chart(fig2, use_container_width=True)
+            
+        # Graphique effets secondaires
+        fig3 = px.box(data, x='adherence', y='effets_secondaires',
+                     labels={'adherence': 'Adhérence (0=Non, 1=Oui)', 'effets_secondaires': 'Nombre d\'effets secondaires'},
+                     title="Distribution des effets secondaires selon l'adhérence")
+        st.plotly_chart(fig3, use_container_width=True)
+        
+        st.markdown("""
+        **💡 Observations :**
+        - Les patients plus jeunes ont tendance à mieux adhérer
+        - Un coût élevé réduit l'adhérence  
+        - Plus d'effets secondaires = moins d'adhérence
+        """)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
-code3 = st.text_area("Step 3 Code:", value="""# Train machine learning model
-from sklearn.linear_model import LinearRegression
+# ÉTAPE 3 : Entraînement du modèle
+if st.session_state.data_generated:
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
+    st.markdown("### 🤖 Étape 3 : Entraîner le modèle d'IA")
+    st.markdown("""
+    **Explication :** Nous allons utiliser un algorithme appelé **Random Forest** (Forêt Aléatoire).
+    
+    **Qu'est-ce que Random Forest ?**
+    - Imagine 100 médecins qui donnent chacun leur opinion
+    - Chaque médecin regarde les données différemment  
+    - Le diagnostic final = vote majoritaire des 100 médecins
+    - Plus fiable qu'un seul médecin !
+    """)
+    
+    # Choix de l'algorithme
+    algo_choice = st.selectbox(
+        "Choisissez l'algorithme :",
+        ["Random Forest (Recommandé)", "Régression Logistique (Simple)"]
+    )
+    
+    if st.button("🚀 Entraîner le modèle", key="train_model"):
+        data = st.session_state.data
+        
+        with st.spinner("Entraînement en cours..."):
+            # Préparation des données
+            X = data[['age', 'cout_annuel', 'effets_secondaires']]
+            y = data['adherence']
+            
+            # Division train/test
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.3, random_state=42
+            )
+            
+            # Choix du modèle
+            if "Random Forest" in algo_choice:
+                model = RandomForestClassifier(n_estimators=100, random_state=42)
+                model_name = "Random Forest"
+            else:
+                model = LogisticRegression(random_state=42)
+                model_name = "Régression Logistique"
+            
+            # Entraînement
+            model.fit(X_train, y_train)
+            
+            # Prédictions
+            y_pred = model.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
+            
+            # Sauvegarde
+            st.session_state.model = model
+            st.session_state.model_name = model_name
+            st.session_state.X_test = X_test
+            st.session_state.y_test = y_test
+            st.session_state.y_pred = y_pred
+            st.session_state.accuracy = accuracy
+            st.session_state.model_trained = True
+        
+        st.success(f"✅ Modèle {model_name} entraîné avec succès !")
+        st.metric("Précision du modèle", f"{accuracy:.1%}")
+        
+        # Importance des variables (pour Random Forest)
+        if "Random Forest" in algo_choice:
+            importance = model.feature_importances_
+            feature_names = ['Âge', 'Coût annuel', 'Effets secondaires']
+            
+            fig_imp = px.bar(
+                x=feature_names, y=importance,
+                title="Importance des variables dans la prédiction",
+                labels={'x': 'Variables', 'y': 'Importance'}
+            )
+            st.plotly_chart(fig_imp, use_container_width=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Create and train the model
-model = LinearRegression()
-model.fit(X_train, y_train)
+# ÉTAPE 4 : Évaluation du modèle
+if st.session_state.get('model_trained', False):
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
+    st.markdown("### 📊 Étape 4 : Évaluer les performances")
+    st.markdown("""
+    **Explication :** Nous devons vérifier si notre modèle fait de bonnes prédictions.
+    Nous utilisons une **matrice de confusion** pour voir les erreurs.
+    """)
+    
+    if st.button("📈 Analyser les performances", key="evaluate_model"):
+        y_test = st.session_state.y_test
+        y_pred = st.session_state.y_pred
+        accuracy = st.session_state.accuracy
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Matrice de confusion
+            cm = confusion_matrix(y_test, y_pred)
+            
+            fig_cm = px.imshow(
+                cm, 
+                labels=dict(x="Prédiction", y="Réalité", color="Nombre"),
+                x=['Non-adhérent', 'Adhérent'],
+                y=['Non-adhérent', 'Adhérent'],
+                title="Matrice de confusion"
+            )
+            fig_cm.update_layout(width=400, height=400)
+            st.plotly_chart(fig_cm, use_container_width=True)
+            
+        with col2:
+            st.markdown("**📊 Résultats :**")
+            st.metric("Précision globale", f"{accuracy:.1%}")
+            
+            # Calcul des métriques détaillées
+            tn, fp, fn, tp = cm.ravel()
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+            
+            st.metric("Précision (patients adhérents)", f"{precision:.1%}")
+            st.metric("Rappel (patients adhérents)", f"{recall:.1%}")
+            
+            st.markdown("""
+            **💡 Interprétation :**
+            - **Précision** : Sur 100 patients prédits adhérents, combien le sont vraiment ?
+            - **Rappel** : Sur 100 patients vraiment adhérents, combien sont détectés ?
+            """)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
-print("🎯 Model trained successfully!")
-print(f"Model learned from {len(X_train)} drug samples")
-
-# Show what the model learned
-print("\\nModel insights:")
-print(f"Molecular weight importance: {model.coef_[0]:.3f}")
-print(f"Solubility importance: {model.coef_[1]:.3f}")""", height=160, key="code3")
-
-if st.button("▶️ Run Step 3", key="run3"):
-    success, output, context = run_code(code3)
-    st.session_state.results['step3'] = context
-    if success:
-        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Step 4
-st.markdown('<div class="step-box">', unsafe_allow_html=True)
-st.markdown("### 🔮 Step 4: Make Predictions")
-st.markdown("**What:** Use the trained AI to predict effectiveness of new, unseen drugs")
-
-code4 = st.text_area("Step 4 Code:", value="""# Make predictions on test drugs
-from sklearn.metrics import r2_score
-
-# Predict effectiveness of test drugs
-y_pred = model.predict(X_test)
-
-print("🔮 Predictions made!")
-print("\\nSample predictions:")
-for i in range(5):
-    actual = y_test.iloc[i]
-    predicted = y_pred[i]
-    print(f"Drug {i+1}: Actual={actual:.1f}, Predicted={predicted:.1f}")
-
-# Calculate accuracy
-accuracy = r2_score(y_test, y_pred)
-print(f"\\n📊 Model accuracy: {accuracy:.3f} (0=bad, 1=perfect)")""", height=180, key="code4")
-
-if st.button("▶️ Run Step 4", key="run4"):
-    success, output, context = run_code(code4)
-    st.session_state.results['step4'] = context
-    if success:
-        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Step 5
-st.markdown('<div class="step-box">', unsafe_allow_html=True)
-st.markdown("### 🎯 Step 5: Design New Drug")
-st.markdown("**What:** Use your AI model to design a new drug with optimal properties")
-
-code5 = st.text_area("Step 5 Code:", value="""# Design new drug using AI predictions
-import numpy as np
-
-# Test different drug compositions
-new_drugs = pd.DataFrame({
-    'molecular_weight': [250, 300, 350, 400],
-    'solubility': [0.3, 0.5, 0.7, 0.9]
-})
-
-# Predict their effectiveness
-predicted_effectiveness = model.predict(new_drugs)
-
-print("🧬 New drug candidates:")
-for i, row in new_drugs.iterrows():
-    effectiveness = predicted_effectiveness[i]
-    print(f"Drug {i+1}: Weight={row['molecular_weight']}, "
-          f"Solubility={row['solubility']}, "
-          f"Predicted effectiveness={effectiveness:.1f}")
-
-best_drug = np.argmax(predicted_effectiveness)
-print(f"\\n🏆 Best candidate: Drug {best_drug + 1}")""", height=200, key="code5")
-
-if st.button("▶️ Run Step 5", key="run5"):
-    success, output, context = run_code(code5)
-    if success:
-        st.markdown(f'<div class="code-output">{output}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="error-output">Error: {output}</div>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
+# ÉTAPE 5 : Faire des prédictions
+if st.session_state.get('model_trained', False):
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
+    st.markdown("### 🎯 Étape 5 : Prédire pour un nouveau patient")
+    st.markdown("""
+    **Explication :** Maintenant, utilisons notre modèle entraîné pour prédire 
+    si un nouveau patient va adhérer à son traitement.
+    """)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Saisissez les informations du patient :**")
+        
+        patient_age = st.slider("Âge du patient", 18, 90, 55)
+        patient_cout = st.slider("Coût annuel du traitement (€)", 500, 8000, 2000)
+        patient_effets = st.slider("Nombre d'effets secondaires", 0, 8, 2)
+        
+        if st.button("🔮 Prédire l'adhérence", key="predict_patient"):
+            model = st.session_state.model
+            
+            # Prédiction
+            patient_data = np.array([[patient_age, patient_cout, patient_effets]])
+            prediction = model.predict(patient_data)[0]
+            proba = model.predict_proba(patient_data)[0]
+            
+            # Affichage du résultat
+            if prediction == 1:
+                st.success(f"✅ **Patient ADHÉRENT** (probabilité: {proba[1]:.1%})")
+                st.balloons()
+            else:
+                st.error(f"❌ **Patient NON-ADHÉRENT** (probabilité: {proba[0]:.1%})")
+                
+            # Recommandations
+            st.markdown("**💡 Recommandations :**")
+            if patient_cout > 4000:
+                st.warning("💰 Coût élevé : Considérer une aide financière")
+            if patient_effets > 4:
+                st.warning("😷 Beaucoup d'effets secondaires : Ajuster le traitement")
+            if patient_age > 75:
+                st.info("👴 Patient âgé : Prévoir un suivi renforcé")
+    
+    with col2:
+        # Profil du patient
+        st.markdown("**👤 Profil du patient :**")
+        
+        patient_data_display = pd.DataFrame({
+            'Caractéristique': ['Âge', 'Coût annuel', 'Effets secondaires'],
+            'Valeur': [f"{patient_age} ans", f"{patient_cout} €", patient_effets]
+        })
+        st.table(patient_data_display)
+        
+        # Comparaison avec la population
+        if 'data' in st.session_state:
+            data = st.session_state.data
+            st.markdown("**📊 Comparaison avec la population :**")
+            
+            age_percentile = (data['age'] <= patient_age).mean() * 100
+            cout_percentile = (data['cout_annuel'] <= patient_cout).mean() * 100
+            effets_percentile = (data['effets_secondaires'] <= patient_effets).mean() * 100
+            
+            st.write(f"• Âge : {age_percentile:.0f}e percentile")
+            st.write(f"• Coût : {cout_percentile:.0f}e percentile") 
+            st.write(f"• Effets : {effets_percentile:.0f}e percentile")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Conclusion
 st.markdown("---")
 st.markdown("""
-## 🎉 Congratulations!
+## 🎉 Félicitations !
 
-You just completed a **machine learning drug discovery pipeline** in 5 steps:
+Vous avez créé votre premier modèle de Machine Learning pour prédire l'adhérence médicamenteuse !
 
-1. ✅ **Data Creation** - Generated drug properties
-2. ✅ **Data Preparation** - Split training/testing
-3. ✅ **Model Training** - Taught AI to predict effectiveness  
-4. ✅ **Prediction** - Tested on new drugs
-5. ✅ **Drug Design** - Found optimal candidate
+### 📚 Ce que vous avez appris :
+1. **Préparer des données** : Créer un jeu de données représentatif
+2. **Explorer les données** : Comprendre les relations entre variables
+3. **Entraîner un modèle** : Utiliser Random Forest pour apprendre
+4. **Évaluer les performances** : Mesurer la qualité des prédictions
+5. **Faire des prédictions** : Utiliser le modèle sur de nouveaux cas
 
-### 🚀 Real Applications at Sanofi:
-- **Molecular property prediction**
-- **Drug-target interaction modeling**
-- **Clinical trial optimization**
-- **Side effect prediction**
+### 🏥 Applications réelles :
+- **Optimisation des traitements** : Identifier les patients à risque
+- **Personnalisation** : Adapter les protocoles selon le profil patient
+- **Prévention** : Intervenir avant l'arrêt du traitement
+- **Allocation des ressources** : Prioriser le suivi médical
 
-*This simplified example demonstrates the core ML workflow used in pharmaceutical research.*
+### 🚀 Pour aller plus loin :
+- Ajouter plus de variables (historique, comorbidités, socio-économiques)
+- Tester d'autres algorithmes (XGBoost, Neural Networks)
+- Valider sur de vraies données médicales
+- Intégrer dans un système d'aide à la décision clinique
 """)
+
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: #666;'>
+    💊 Tutoriel Machine Learning - Prédiction d'Adhérence Médicamenteuse<br>
+    🔬 Pour l'éducation et la recherche médicale
+</div>
+""", unsafe_allow_html=True)
