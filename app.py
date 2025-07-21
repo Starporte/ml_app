@@ -91,8 +91,17 @@ st.markdown("""
 
 # Sanofi Logo
 try:
+    st.image("sanofi_logo.jpg", width=80)
     st.markdown("""
-    <img src="sanofi_logo.jpg" class="sanofi-logo" alt="Sanofi Logo">
+    <style>
+    .element-container:has(img) {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        opacity: 0.7;
+    }
+    </style>
     """, unsafe_allow_html=True)
 except:
     pass
@@ -444,9 +453,12 @@ if st.session_state.step5:
             if prediction == 1:
                 st.success(f"LIKELY ADHERENT - Confidence: {probability[1]:.1%}")
                 st.markdown("**Recommendation:** Standard MyWay support program")
+                st.balloons()
             else:
                 st.error(f"AT RISK FOR NON-ADHERENCE - Confidence: {probability[0]:.1%}")
                 st.markdown("**Recommendation:** Enhanced support with personalized interventions")
+            
+            st.markdown('<div class="success-output">Patient risk assessment complete</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown("**Patient Risk Profile:**")
