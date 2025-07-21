@@ -132,6 +132,14 @@ st.markdown("""
 **Your Mission:** As a data scientist, you'll build an AI system that can identify patients at risk of poor adherence before it happens, enabling proactive interventions.
 """)
 
+# Call to Action Button
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    if st.button("🚀 JUMP INTO ACTION", key="jump_action", type="primary", use_container_width=True):
+        st.markdown("Let's start building your AI system!")
+        # Scroll to Step 1 (visual cue)
+        st.balloons()
+
 # Data Science Workflow
 st.markdown("""
 <div class="workflow-box">
