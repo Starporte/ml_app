@@ -108,7 +108,7 @@ try:
     # Create a specific container for the logo
     st.markdown('<div class="logo-container">', unsafe_allow_html=True)
     st.image("sanofi_logo.jpg", width=80)
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 except:
     pass
 
@@ -142,26 +142,28 @@ st.markdown("""
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     if st.button("🚀 JUMP INTO ACTION", key="jump_action", type="primary", use_container_width=True):
+        st.session_state.show_workflow = True
         st.markdown("Let's start building your AI system!")
-        # Scroll to Step 1 (visual cue)
         st.balloons()
 
-# Data Science Workflow
-st.markdown("""
-<div class="workflow-box">
-    <h3>The Data Science Workflow</h3>
-    <p>Every data scientist follows these core steps:</p>
-    <strong>1. Understand the Problem</strong> → <strong>2. Collect & Explore Data</strong> → <strong>3. Prepare Data</strong> → <strong>4. Build Model</strong> → <strong>5. Evaluate Performance</strong> → <strong>6. Deploy & Predict</strong>
-</div>
-""", unsafe_allow_html=True)
+# Data Science Workflow - only show after "Jump into Action" is clicked
+if st.session_state.show_workflow:
+    st.markdown("""
+    <div class="workflow-box">
+        <h3>The Data Science Workflow</h3>
+        <p>Every data scientist follows these core steps:</p>
+        <strong>1. Understand the Problem</strong> → <strong>2. Collect & Explore Data</strong> → <strong>3. Prepare Data</strong> → <strong>4. Build Model</strong> → <strong>5. Evaluate Performance</strong> → <strong>6. Deploy & Predict</strong>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Initialize session state
-for key in ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'data', 'model']:
+for key in ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'data', 'model', 'show_workflow']:
     if key not in st.session_state:
         st.session_state[key] = False
 
-# STEP 1: Data Collection
-st.markdown('<div class="step-box">', unsafe_allow_html=True)
+# STEP 1: Data Collection - only show after workflow is revealed
+if st.session_state.show_workflow:
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
 st.markdown("### Step 1: Data Collection - Understanding Patient Patterns")
 st.markdown("""**The Data Scientist's First Task:** Gather and generate realistic patient data that mirrors real-world adherence patterns.
 
@@ -510,7 +512,18 @@ if st.session_state.step5:
     - Trained an AI model with {:.1%} clinical accuracy  
     - Created a real-time prediction system for MyWay
     - Enabled proactive patient interventions
-
+    
+    **Clinical Impact:**
+    - **Early Risk Detection:** Identify non-adherent patients before treatment failure
+    - **Resource Optimization:** Focus intensive support on high-risk patients
+    - **Improved Outcomes:** Proactive interventions lead to better adherence rates
+    - **Cost Reduction:** Prevent expensive hospitalizations and treatment failures
+    
+    **Next Steps in Real Deployment:**
+    - Integration with Electronic Health Records
+    - Clinical validation studies
+    - Regulatory approval processes
+    - Healthcare provider training programs
     """.format(st.session_state.get('accuracy', 0)))
 
 st.markdown("---")
