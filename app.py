@@ -516,17 +516,10 @@ if st.session_state.step5:
     ## 🎉 Congratulations! You Built an AI System
     
     **What you accomplished:**
-    - ✅ Generated 1,000 patient records
-    - ✅ Analyzed data patterns  
+    - ✅ Analyzed data patterns inside 1,000 patient records
     - ✅ Trained AI with 100 decision trees
     - ✅ Achieved {:.1%} prediction accuracy
     - ✅ Made real-time predictions
-    
-    **Real-world applications:**
-    - 🏥 Hospital patient monitoring
-    - 💊 Pharmacy intervention programs  
-    - 📱 Mobile health apps
-    - 🔬 Clinical research
     """.format(st.session_state.get('accuracy', 0)))
 
 st.markdown("---")
