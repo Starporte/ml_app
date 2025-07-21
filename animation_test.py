@@ -1,356 +1,449 @@
 import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
 import numpy as np
-import time
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix
+import plotly.express as px
 
-st.set_page_config(page_title="🎬 Animation Tests", layout="wide")
+# Page config
+st.set_page_config(
+    page_title="🤖 AI Drug Adherence Predictor",
+    page_icon="💊",
+    layout="wide"
+)
 
-st.title("🎬 Decision Tree Animation Tests")
-st.markdown("Testing 3 different animation approaches")
-
-# CSS Animations
+# CSS
 st.markdown("""
 <style>
-    .tree-node {
-        width: 100px;
-        height: 100px;
-        background: linear-gradient(45deg, #4CAF50, #45a049);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
+    .main-header {
+        background: linear-gradient(90deg, #1f77b4, #ff7f0e);
         color: white;
-        margin: 10px auto;
-        animation: grow 2s ease-in-out;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-    
-    .tree-branch {
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(45deg, #FF9800, #F57C00);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        color: white;
-        margin: 5px auto;
-        animation: slideIn 1s ease-in-out;
-        animation-delay: 0.5s;
-        opacity: 0;
-        animation-fill-mode: forwards;
-    }
-    
-    .tree-leaf {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(45deg, #2196F3, #1976D2);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        color: white;
-        margin: 5px auto;
-        animation: fadeIn 1s ease-in-out;
-        animation-delay: 1.5s;
-        opacity: 0;
-        animation-fill-mode: forwards;
-    }
-    
-    @keyframes grow {
-        0% { 
-            transform: scale(0) rotate(0deg); 
-            opacity: 0;
-        }
-        50% {
-            transform: scale(1.2) rotate(180deg);
-        }
-        100% { 
-            transform: scale(1) rotate(360deg); 
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideIn {
-        0% { 
-            transform: translateX(-100px); 
-            opacity: 0;
-        }
-        100% { 
-            transform: translateX(0); 
-            opacity: 1;
-        }
-    }
-    
-    @keyframes fadeIn {
-        0% { 
-            opacity: 0; 
-            transform: translateY(20px);
-        }
-        100% { 
-            opacity: 1; 
-            transform: translateY(0);
-        }
-    }
-    
-    .decision-path {
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 15px;
-        margin: 10px 0;
+        padding: 20px;
+        text-align: center;
         border-radius: 10px;
-        animation: typewriter 3s steps(40) forwards;
-        overflow: hidden;
-        white-space: nowrap;
-        border-right: 3px solid white;
-        width: 0;
+        margin-bottom: 20px;
     }
     
-    @keyframes typewriter {
-        to { 
-            width: 100%; 
-            border-right: none;
-        }
+    .step-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #1f77b4;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 5px;
     }
     
-    .voting-box {
-        background: #f0f8ff;
-        border: 2px solid #4CAF50;
-        border-radius: 15px;
-        padding: 20px;
-        margin: 10px;
-        animation: pulse 2s infinite;
+    .code-box {
+        background-color: #1e1e1e;
+        color: #dcdcaa;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        border: 1px solid #444;
     }
     
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
-    }
-    
-    .forest-container {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-        padding: 20px;
-    }
-    
-    .mini-tree {
-        width: 30px;
-        height: 30px;
-        background: #4CAF50;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 10px;
-        animation: treeGrow var(--delay, 0s) 0.5s ease-in-out forwards;
-        opacity: 0;
-        transform: scale(0);
-    }
-    
-    @keyframes treeGrow {
-        to { opacity: 1; transform: scale(1); }
+    .success-output {
+        background-color: #d4edda;
+        border: 1px solid #28a745;
+        padding: 10px;
+        border-radius: 5px;
+        color: #155724;
+        font-family: 'Courier New', monospace;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Option 1: Manim-style with CSS (Simulation)
-st.header("🎨 Option 1: CSS Animations (Manim-style)")
-st.markdown("**Simulating Manim-like animations with pure CSS**")
+# Header
+st.markdown("""
+<div class="main-header">
+    <h1>🤖 AI Drug Adherence Predictor</h1>
+    <h3>Learn AI Step by Step</h3>
+</div>
+""", unsafe_allow_html=True)
 
-if st.button("🚀 Start Decision Tree Animation", key="css_anim"):
-    st.markdown("### 🌳 Building Decision Tree Step by Step")
+st.markdown("**Build an AI that predicts if patients will take their medication correctly**")
+
+# Initialize session state
+for key in ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'data', 'model']:
+    if key not in st.session_state:
+        st.session_state[key] = False
+
+# STEP 1: Generate Data
+st.markdown('<div class="step-box">', unsafe_allow_html=True)
+st.markdown("### 📊 Step 1: Create Patient Data")
+st.markdown("Generate synthetic patient data with age, cost, and side effects")
+
+st.markdown('<div class="code-box">np.random.seed(42); data = generate_patient_data(1000)</div>', unsafe_allow_html=True)
+
+if st.button("▶️ Execute Code", key="btn1"):
+    with st.spinner("Running AI code..."):
+        np.random.seed(42)
+        n_patients = 1000
+        
+        age = np.random.normal(65, 15, n_patients)
+        age = np.clip(age, 18, 90)
+        
+        cost = np.random.exponential(2000, n_patients)
+        cost = np.clip(cost, 500, 8000)
+        
+        side_effects = np.random.poisson(2, n_patients)
+        side_effects = np.clip(side_effects, 0, 8)
+        
+        # Generate adherence based on realistic logic
+        adherence_score = (-0.02 * age - 0.0003 * cost - 0.5 * side_effects + 
+                          np.random.normal(0, 1, n_patients))
+        adherence = (adherence_score > np.median(adherence_score)).astype(int)
+        
+        data = pd.DataFrame({
+            'age': age.round(0).astype(int),
+            'annual_cost': cost.round(0).astype(int),
+            'side_effects': side_effects,
+            'adherent': adherence
+        })
+        
+        st.session_state.data = data
+        st.session_state.step1 = True
     
-    # Root node
-    st.markdown('<div class="tree-node">🎯 Root<br>Age?</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="success-output">✅ Generated {len(data)} patient records</div>', unsafe_allow_html=True)
     
-    time.sleep(1)
-    
-    # Branch nodes
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown('<div class="tree-branch">< 65<br>💊</div>', unsafe_allow_html=True)
+        st.dataframe(data.head())
     with col2:
-        st.markdown('<div class="tree-branch">> 65<br>💰</div>', unsafe_allow_html=True)
-    
-    time.sleep(1)
-    
-    # Leaf nodes
-    cols = st.columns(4)
-    with cols[0]:
-        st.markdown('<div class="tree-leaf">✅<br>YES</div>', unsafe_allow_html=True)
-    with cols[1]:
-        st.markdown('<div class="tree-leaf">❌<br>NO</div>', unsafe_allow_html=True)
-    with cols[2]:
-        st.markdown('<div class="tree-leaf">✅<br>YES</div>', unsafe_allow_html=True)
-    with cols[3]:
-        st.markdown('<div class="tree-leaf">❌<br>NO</div>', unsafe_allow_html=True)
-    
-    # Decision path animation
-    st.markdown('<div class="decision-path">🔍 Decision Path: Age=70 → >65 → Check Cost → $1500 → ✅ ADHERENT</div>', unsafe_allow_html=True)
+        adherent_pct = data['adherent'].mean() * 100
+        st.metric("Adherent Patients", f"{adherent_pct:.1f}%")
 
-# Option 2: Plotly Animations
-st.header("📊 Option 2: Plotly Interactive Animations")
+st.markdown('</div>', unsafe_allow_html=True)
 
-if st.button("📈 Create Plotly Tree Animation", key="plotly_anim"):
-    # Simulate tree building with animated scatter plot
-    frames_data = []
+# STEP 2: Explore Data
+if st.session_state.step1:
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
+    st.markdown("### 🔍 Step 2: Analyze Data Patterns")
+    st.markdown("Visualize how age, cost and side effects affect adherence")
     
-    # Frame 1: Root node
-    frames_data.append({
-        'x': [0], 'y': [0], 
-        'text': ['Root: Age?'], 
-        'size': [50],
-        'color': ['red'],
-        'frame': 0
-    })
+    st.markdown('<div class="code-box">fig = px.box(data, x="adherent", y="age"); fig.show()</div>', unsafe_allow_html=True)
     
-    # Frame 2: Add branches
-    frames_data.append({
-        'x': [0, -2, 2], 'y': [0, -1, -1],
-        'text': ['Root: Age?', '< 65 years', '> 65 years'],
-        'size': [50, 40, 40],
-        'color': ['red', 'orange', 'orange'],
-        'frame': 1
-    })
-    
-    # Frame 3: Add leaves
-    frames_data.append({
-        'x': [0, -2, 2, -3, -1, 1, 3], 
-        'y': [0, -1, -1, -2, -2, -2, -2],
-        'text': ['Root: Age?', '< 65 years', '> 65 years', 
-                'ADHERENT', 'NON-ADHERENT', 'ADHERENT', 'NON-ADHERENT'],
-        'size': [50, 40, 40, 30, 30, 30, 30],
-        'color': ['red', 'orange', 'orange', 'green', 'blue', 'green', 'blue'],
-        'frame': 2
-    })
-    
-    # Create animated figure
-    df_frames = pd.DataFrame([
-        {'x': x, 'y': y, 'text': text, 'size': size, 'color': color, 'frame': frame}
-        for frame_data in frames_data
-        for x, y, text, size, color in zip(
-            frame_data['x'], frame_data['y'], frame_data['text'], 
-            frame_data['size'], frame_data['color']
-        )
-        for frame in [frame_data['frame']]
-    ])
-    
-    fig = px.scatter(df_frames, x='x', y='y', text='text', size='size',
-                     color='color', animation_frame='frame',
-                     title='Decision Tree Construction',
-                     range_x=[-4, 4], range_y=[-3, 1])
-    
-    fig.update_traces(textposition="middle center", textfont_size=12)
-    fig.update_layout(showlegend=False, height=500)
-    fig.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 2000
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Random Forest voting animation
-    st.markdown("### 🗳️ Random Forest Voting Process")
-    
-    # Create voting animation data
-    trees_data = []
-    for i in range(0, 101, 10):  # 0, 10, 20, ..., 100
-        adherent_votes = int(i * 0.65)  # 65% vote adherent
-        non_adherent_votes = i - adherent_votes
+    if st.button("▶️ Execute Code", key="btn2"):
+        data = st.session_state.data
         
-        trees_data.append({
-            'Trees_Processed': i,
-            'Adherent_Votes': adherent_votes,
-            'Non_Adherent_Votes': non_adherent_votes,
-            'Confidence': adherent_votes / max(i, 1) if i > 0 else 0
+        # Simple averages comparison
+        adherent_data = data[data['adherent'] == 1]
+        non_adherent_data = data[data['adherent'] == 0]
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            avg_age_yes = adherent_data['age'].mean()
+            avg_age_no = non_adherent_data['age'].mean()
+            
+            st.metric("👴 Average Age", "")
+            st.write(f"**Adherent:** {avg_age_yes:.0f} years")
+            st.write(f"**Non-adherent:** {avg_age_no:.0f} years")
+            
+            if avg_age_yes < avg_age_no:
+                st.success("✅ Younger patients take meds better!")
+            else:
+                st.info("📊 Older patients take meds better!")
+            
+        with col2:
+            avg_cost_yes = adherent_data['annual_cost'].mean()
+            avg_cost_no = non_adherent_data['annual_cost'].mean()
+            
+            st.metric("💰 Average Cost", "")
+            st.write(f"**Adherent:** ${avg_cost_yes:.0f}")
+            st.write(f"**Non-adherent:** ${avg_cost_no:.0f}")
+            
+            if avg_cost_yes < avg_cost_no:
+                st.success("✅ Cheaper = Better adherence!")
+            else:
+                st.info("📊 Expensive = Better adherence!")
+            
+        with col3:
+            avg_effects_yes = adherent_data['side_effects'].mean()
+            avg_effects_no = non_adherent_data['side_effects'].mean()
+            
+            st.metric("😷 Average Side Effects", "")
+            st.write(f"**Adherent:** {avg_effects_yes:.1f}")
+            st.write(f"**Non-adherent:** {avg_effects_no:.1f}")
+            
+            if avg_effects_yes < avg_effects_no:
+                st.success("✅ Fewer side effects = Better!")
+            else:
+                st.info("📊 More side effects = Better!")
+        
+        # Simple bar chart
+        st.markdown("**📊 Quick Summary:**")
+        summary_data = pd.DataFrame({
+            'Group': ['Adherent', 'Non-Adherent'],
+            'Average Age': [avg_age_yes, avg_age_no],
+            'Average Cost': [avg_cost_yes, avg_cost_no],
+            'Side Effects': [avg_effects_yes, avg_effects_no]
         })
+        
+        fig = px.bar(summary_data, x='Group', y='Average Age', 
+                     title="Age Comparison", color='Group',
+                     color_discrete_map={'Adherent': 'green', 'Non-Adherent': 'red'})
+        st.plotly_chart(fig, use_container_width=True)
+        
+        st.session_state.step2 = True
+        st.markdown('<div class="success-output">✅ Simple patterns found: Younger + Cheaper + Less side effects = Better adherence</div>', unsafe_allow_html=True)
     
-    df_voting = pd.DataFrame(trees_data)
-    
-    fig_voting = px.bar(df_voting, x='Trees_Processed', 
-                       y=['Adherent_Votes', 'Non_Adherent_Votes'],
-                       title='Random Forest Voting Progress',
-                       labels={'value': 'Votes', 'variable': 'Prediction'},
-                       color_discrete_map={
-                           'Adherent_Votes': 'green',
-                           'Non_Adherent_Votes': 'red'
-                       })
-    
-    st.plotly_chart(fig_voting, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Option 3: Advanced CSS with Interactive Elements
-st.header("🎭 Option 3: Advanced CSS + Interactive")
+# STEP 3: Split Data
+if st.session_state.step2:
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
+    st.markdown("### ✂️ Step 3: Split Data for Training")
+    st.markdown("Divide data into training (70%) and testing (30%) sets")
+    
+    st.markdown('<div class="code-box">X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)</div>', unsafe_allow_html=True)
+    
+    if st.button("▶️ Execute Code", key="btn3"):
+        data = st.session_state.data
+        
+        X = data[['age', 'annual_cost', 'side_effects']]
+        y = data['adherent']
+        
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        
+        st.session_state.X_train = X_train
+        st.session_state.X_test = X_test
+        st.session_state.y_train = y_train
+        st.session_state.y_test = y_test
+        st.session_state.step3 = True
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Training Samples", len(X_train))
+        with col2:
+            st.metric("Testing Samples", len(X_test))
+        
+        st.markdown('<div class="success-output">✅ Data successfully split</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
-if st.button("🎪 Launch Interactive Forest", key="advanced_css"):
-    st.markdown("### 🌲 Random Forest Simulation")
+# STEP 4: AI Deep Dive & Training
+if st.session_state.step3:
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
+    st.markdown("### 🧠 Step 4: Deep Dive into AI")
     
-    # Dynamic forest creation
-    st.markdown('<div class="voting-box">🗳️ <strong>100 Trees Voting in Real-Time</strong></div>', unsafe_allow_html=True)
+    # AI Categories explanation
+    st.markdown("**🤖 3 Main Types of AI:**")
     
-    # Create mini forest with staggered animations
-    forest_html = '<div class="forest-container">'
-    for i in range(100):
-        delay = i * 0.05  # Stagger animation
-        forest_html += f'<div class="mini-tree" style="--delay: {delay}s">🌳</div>'
-    forest_html += '</div>'
+    col1, col2, col3 = st.columns(3)
     
-    st.markdown(forest_html, unsafe_allow_html=True)
-    
-    # Voting progress
-    progress_placeholder = st.empty()
-    votes_placeholder = st.empty()
-    
-    adherent_votes = 0
-    non_adherent_votes = 0
-    
-    for i in range(1, 101):
-        time.sleep(0.1)  # Simulate processing time
+    with col1:
+        st.markdown("""
+        **🎯 Supervised Learning**
+        - Has labeled data (answers)
+        - Learns from examples
+        - Makes predictions
+        - **← We use this!**
+        """)
         
-        # Random voting (65% adherent probability)
-        if np.random.random() < 0.65:
-            adherent_votes += 1
-        else:
-            non_adherent_votes += 1
+    with col2:
+        st.markdown("""
+        **🔍 Unsupervised Learning**
+        - No labels/answers
+        - Finds hidden patterns
+        - Groups similar data
+        - Example: Customer segments
+        """)
         
-        # Update progress
-        progress_placeholder.progress(i / 100)
-        
-        # Update vote count
-        confidence = adherent_votes / i
-        votes_placeholder.markdown(f"""
-        **Tree {i}/100 voted:**
-        - ✅ Adherent: {adherent_votes} ({adherent_votes/i:.1%})
-        - ❌ Non-Adherent: {non_adherent_votes} ({non_adherent_votes/i:.1%})
-        
-        **Current Prediction: {'✅ ADHERENT' if confidence > 0.5 else '❌ NON-ADHERENT'}** 
-        (Confidence: {max(confidence, 1-confidence):.1%})
+    with col3:
+        st.markdown("""
+        **🎮 Reinforcement Learning**
+        - Learns by trial/error
+        - Gets rewards/penalties
+        - Improves over time
+        - Example: Game AI
         """)
     
-    # Final result
-    if adherent_votes > non_adherent_votes:
-        st.success(f"🎉 Final Decision: **ADHERENT** ({adherent_votes}/100 trees voted)")
-        st.balloons()
-    else:
-        st.error(f"❌ Final Decision: **NON-ADHERENT** ({non_adherent_votes}/100 trees voted)")
+    st.info("💡 **Our case:** Supervised Learning → Classification (Yes/No adherence)")
+    
+    # Decision Tree Visualization
+    st.markdown("**🌳 How Decision Trees Work:**")
+    
+    if st.button("🎬 Show Animated Decision Tree", key="show_tree"):
+        # Embed the HTML animation
+        decision_tree_html = """
+        <div style="width: 100%; height: 700px; border: 2px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+            <iframe src="data:text/html;charset=utf-8,%3C%21DOCTYPE%20html%3E%0A%3Chtml%20lang%3D%22en%22%3E%0A%3Chead%3E%0A%20%20%20%20%3Cmeta%20charset%3D%22UTF-8%22%3E%0A%20%20%20%20%3Cmeta%20name%3D%22viewport%22%20content%3D%22width%3Ddevice-width%2C%20initial-scale%3D1.0%22%3E%0A%20%20%20%20%3Ctitle%3EDecision%20Tree%3C/title%3E%0A%20%20%20%20%3Cscript%20src%3D%22https%3A//cdn.tailwindcss.com%22%3E%3C/script%3E%0A%20%20%20%20%3Cstyle%3E%0A%20%20%20%20%20%20%20%20body%20%7B%20font-family%3A%20%27Arial%27%2C%20sans-serif%3B%20background%3A%20%23f0f4f8%3B%20%7D%0A%20%20%20%20%20%20%20%20.node%20%7B%20fill%3A%20white%3B%20stroke%3A%20%232c7a7b%3B%20stroke-width%3A%202px%3B%20filter%3A%20drop-shadow(0px%202px%204px%20rgba(0%2C%200%2C%200%2C%200.1))%3B%20%7D%0A%20%20%20%20%20%20%20%20.node-text%20%7B%20font-size%3A%2014px%3B%20text-anchor%3A%20middle%3B%20fill%3A%20%232d3748%3B%20%7D%0A%20%20%20%20%20%20%20%20.link%20%7B%20fill%3A%20none%3B%20stroke%3A%20%23a0aec0%3B%20stroke-width%3A%202px%3B%20%7D%0A%20%20%20%20%20%20%20%20.leaf-node-yes%20%7B%20fill%3A%20%2348bb78%3B%20%7D%0A%20%20%20%20%20%20%20%20.leaf-node-no%20%7B%20fill%3A%20%23f56565%3B%20%7D%0A%20%20%20%20%3C/style%3E%0A%3C/head%3E%0A%3Cbody%3E%0A%20%20%20%20%3Cdiv%20class%3D%22p-4%22%3E%0A%20%20%20%20%20%20%20%20%3Ch2%20class%3D%22text-2xl%20font-bold%20text-center%20mb-4%22%3E%F0%9F%92%8A%20Drug%20Adherence%20Decision%20Tree%3C/h2%3E%0A%20%20%20%20%20%20%20%20%3Csvg%20width%3D%22800%22%20height%3D%22500%22%20class%3D%22mx-auto%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Root%20node%20--%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D%22400%22%20cy%3D%2260%22%20r%3D%2225%22%20class%3D%22node%22%3E%3C/circle%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22400%22%20y%3D%2265%22%20class%3D%22node-text%22%3E%F0%9F%91%A4%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22400%22%20y%3D%22100%22%20class%3D%22node-text%22%3EPatient%20Data%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Cost%20branches%20--%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cline%20x1%3D%22400%22%20y1%3D%2285%22%20x2%3D%22250%22%20y2%3D%22135%22%20class%3D%22link%22%3E%3C/line%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cline%20x1%3D%22400%22%20y1%3D%2285%22%20x2%3D%22550%22%20y2%3D%22135%22%20class%3D%22link%22%3E%3C/line%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D%22250%22%20cy%3D%22160%22%20r%3D%2220%22%20class%3D%22node%22%3E%3C/circle%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22250%22%20y%3D%22165%22%20class%3D%22node-text%22%3E%F0%9F%92%B0%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22250%22%20y%3D%22195%22%20class%3D%22node-text%22%3ELow%20Cost%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D%22550%22%20cy%3D%22160%22%20r%3D%2220%22%20class%3D%22node%22%3E%3C/circle%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22550%22%20y%3D%22165%22%20class%3D%22node-text%22%3E%F0%9F%92%B8%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22550%22%20y%3D%22195%22%20class%3D%22node-text%22%3EHigh%20Cost%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Age%20branches%20--%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cline%20x1%3D%22250%22%20y1%3D%22180%22%20x2%3D%22150%22%20y2%3D%22230%22%20class%3D%22link%22%3E%3C/line%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cline%20x1%3D%22250%22%20y1%3D%22180%22%20x2%3D%22350%22%20y2%3D%22230%22%20class%3D%22link%22%3E%3C/line%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cline%20x1%3D%22550%22%20y1%3D%22180%22%20x2%3D%22450%22%20y2%3D%22230%22%20class%3D%22link%22%3E%3C/line%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cline%20x1%3D%22550%22%20y1%3D%22180%22%20x2%3D%22650%22%20y2%3D%22230%22%20class%3D%22link%22%3E%3C/line%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Final%20predictions%20--%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D%22150%22%20cy%3D%22260%22%20r%3D%2218%22%20class%3D%22node%20leaf-node-yes%22%3E%3C/circle%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22150%22%20y%3D%22265%22%20class%3D%22node-text%22%20fill%3D%22white%22%3E%E2%9C%85%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22150%22%20y%3D%22290%22%20class%3D%22node-text%22%3EAdherent%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D%22350%22%20cy%3D%22260%22%20r%3D%2218%22%20class%3D%22node%20leaf-node-yes%22%3E%3C/circle%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22350%22%20y%3D%22265%22%20class%3D%22node-text%22%20fill%3D%22white%22%3E%E2%9C%85%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22350%22%20y%3D%22290%22%20class%3D%22node-text%22%3EAdherent%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D%22450%22%20cy%3D%22260%22%20r%3D%2218%22%20class%3D%22node%20leaf-node-no%22%3E%3C/circle%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22450%22%20y%3D%22265%22%20class%3D%22node-text%22%20fill%3D%22white%22%3E%E2%9D%8C%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22450%22%20y%3D%22290%22%20class%3D%22node-text%22%3ENon-Adherent%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D%22650%22%20cy%3D%22260%22%20r%3D%2218%22%20class%3D%22node%20leaf-node-no%22%3E%3C/circle%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22650%22%20y%3D%22265%22%20class%3D%22node-text%22%20fill%3D%22white%22%3E%E2%9D%8C%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22650%22%20y%3D%22290%22%20class%3D%22node-text%22%3ENon-Adherent%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Labels%20--%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22320%22%20y%3D%22120%22%20class%3D%22node-text%22%20fill%3D%22%23666%22%3ELow%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22480%22%20y%3D%22120%22%20class%3D%22node-text%22%20fill%3D%22%23666%22%3EHigh%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22200%22%20y%3D%22215%22%20class%3D%22node-text%22%20fill%3D%22%23666%22%3EYoung%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22300%22%20y%3D%22215%22%20class%3D%22node-text%22%20fill%3D%22%23666%22%3EOld%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22500%22%20y%3D%22215%22%20class%3D%22node-text%22%20fill%3D%22%23666%22%3EYoung%3C/text%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctext%20x%3D%22600%22%20y%3D%22215%22%20class%3D%22node-text%22%20fill%3D%22%23666%22%3EOld%3C/text%3E%0A%20%20%20%20%20%20%20%20%3C/svg%3E%0A%20%20%20%20%20%20%20%20%3Cp%20class%3D%22text-center%20mt-4%20text-gray-600%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%F0%9F%92%A1%20This%20shows%20how%20ONE%20decision%20tree%20makes%20predictions%3Cbr%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20Random%20Forest%20uses%20100%20different%20trees%20like%20this%20and%20votes%21%0A%20%20%20%20%20%20%20%20%3C/p%3E%0A%20%20%20%20%3C/div%3E%0A%3C/body%3E%0A%3C/html%3E" width="100%" height="700" style="border: none;"></iframe>
+        </div>
+        """
+        st.components.v1.html(decision_tree_html, height=700)
+    
+    # Random Forest explanation
+    st.markdown("**🌲 From 1 Tree → Random Forest:**")
+    st.markdown("""
+    ```
+    🌳 Tree 1: Cost → Age → Prediction
+    🌳 Tree 2: Age → Side Effects → Prediction  
+    🌳 Tree 3: Side Effects → Cost → Prediction
+    🌳 ... (97 more different trees)
+    
+    📊 Final Vote: Majority decision wins!
+    ```
+    """)
+    
+    # Training section
+    st.markdown("---")
+    st.markdown('<div class="code-box">model = RandomForestClassifier(n_estimators=100); model.fit(X_train, y_train)</div>', unsafe_allow_html=True)
+    
+    if st.button("▶️ Execute Code", key="btn4"):
+        with st.spinner("🧠 Training 100 decision trees..."):
+            
+            # Progress bar simulation
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            for i in range(100):
+                time.sleep(0.02)
+                progress_bar.progress((i + 1) / 100)
+                if i % 10 == 0:
+                    status_text.text(f"🌳 Growing tree {i+1}/100...")
+            
+            model = RandomForestClassifier(n_estimators=100, random_state=42)
+            model.fit(st.session_state.X_train, st.session_state.y_train)
+            
+            st.session_state.model = model
+            st.session_state.step4 = True
+        
+        st.success("🎉 100 decision trees trained successfully!")
+        
+        # Feature importance with simple explanation
+        importance = model.feature_importances_
+        features = ['Age', 'Annual Cost', 'Side Effects']
+        
+        st.markdown("**🎯 What the AI learned:**")
+        
+        for i, (feature, imp) in enumerate(zip(features, importance)):
+            st.write(f"**{feature}:** {imp:.1%} importance")
+            st.progress(imp)
+        
+        # Simple interpretation
+        most_important = features[np.argmax(importance)]
+        st.info(f"🏆 **Key factor:** {most_important}")
+        
+        st.markdown('<div class="success-output">✅ Random Forest trained! 100 trees learned to predict adherence.</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Comparison
-st.header("🔍 Comparison")
-st.markdown("""
-| Method | Pros | Cons | Best For |
-|--------|------|------|----------|
-| **CSS Animation** | 🎨 Beautiful, smooth, no dependencies | ⚠️ Limited interactivity | Static explanations |
-| **Plotly Animation** | 📊 Data-driven, interactive, built-in Streamlit | 🐌 Can be slow with lots of data | Data visualizations |
-| **Advanced CSS + Python** | 🎭 Highly customizable, real-time updates | 🔧 More complex to implement | Interactive demos |
-""")
+# STEP 5: Test AI Model
+if st.session_state.step4:
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
+    st.markdown("### 🎯 Step 5: Test AI Performance")
+    st.markdown("Evaluate how accurately our AI predicts on unseen data")
+    
+    st.markdown('<div class="code-box">predictions = model.predict(X_test); accuracy = accuracy_score(y_test, predictions)</div>', unsafe_allow_html=True)
+    
+    if st.button("▶️ Execute Code", key="btn5"):
+        model = st.session_state.model
+        X_test = st.session_state.X_test
+        y_test = st.session_state.y_test
+        
+        predictions = model.predict(X_test)
+        accuracy = accuracy_score(y_test, predictions)
+        
+        st.session_state.predictions = predictions
+        st.session_state.accuracy = accuracy
+        st.session_state.step5 = True
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.metric("AI Accuracy", f"{accuracy:.1%}")
+            
+            # Confusion Matrix
+            cm = confusion_matrix(y_test, predictions)
+            fig = px.imshow(cm, 
+                           labels=dict(x="AI Prediction", y="Reality"),
+                           x=['Not Adherent', 'Adherent'],
+                           y=['Not Adherent', 'Adherent'],
+                           title="Confusion Matrix")
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            # Performance breakdown
+            tn, fp, fn, tp = cm.ravel()
+            st.write(f"**Correct Predictions:** {tp + tn}")
+            st.write(f"**Wrong Predictions:** {fp + fn}")
+            st.write(f"**Total Tests:** {len(y_test)}")
+        
+        st.markdown('<div class="success-output">✅ AI achieved {:.1%} accuracy</div>'.format(accuracy), unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# STEP 6: Make Predictions
+if st.session_state.step5:
+    st.markdown('<div class="step-box">', unsafe_allow_html=True)
+    st.markdown("### 🔮 Step 6: Predict New Patient")
+    st.markdown("Use trained AI to predict adherence for a new patient")
+    
+    st.markdown('<div class="code-box">new_patient = [age, cost, side_effects]; prediction = model.predict([new_patient])</div>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Enter Patient Data:**")
+        patient_age = st.slider("Age", 18, 90, 65)
+        patient_cost = st.slider("Annual Cost ($)", 500, 8000, 2000)
+        patient_effects = st.slider("Side Effects", 0, 8, 2)
+        
+        if st.button("▶️ Execute Code", key="btn6"):
+            model = st.session_state.model
+            
+            new_patient = np.array([[patient_age, patient_cost, patient_effects]])
+            prediction = model.predict(new_patient)[0]
+            probability = model.predict_proba(new_patient)[0]
+            
+            if prediction == 1:
+                st.success(f"✅ **ADHERENT** (Confidence: {probability[1]:.1%})")
+                st.balloons()
+            else:
+                st.error(f"❌ **NON-ADHERENT** (Confidence: {probability[0]:.1%})")
+            
+            st.markdown(f'<div class="success-output">✅ AI prediction complete</div>', unsafe_allow_html=True)
+    
+    with col2:
+        if st.session_state.get('step1'):
+            data = st.session_state.data
+            
+            st.markdown("**Patient Profile:**")
+            st.write(f"Age: {patient_age} years")
+            st.write(f"Cost: ${patient_cost}")
+            st.write(f"Side Effects: {patient_effects}")
+            
+            # Risk factors
+            if patient_cost > 4000:
+                st.warning("⚠️ High cost risk factor")
+            if patient_effects > 4:
+                st.warning("⚠️ High side effects")
+            if patient_age > 75:
+                st.info("ℹ️ Elderly patient - monitor closely")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Summary
+if st.session_state.step5:
+    st.markdown("---")
+    st.markdown("""
+    ## 🎉 Congratulations! You Built an AI System
+    
+    **What you accomplished:**
+    - ✅ Generated 1,000 patient records
+    - ✅ Analyzed data patterns  
+    - ✅ Trained AI with 100 decision trees
+    - ✅ Achieved {:.1%} prediction accuracy
+    - ✅ Made real-time predictions
+    
+    **Real-world applications:**
+    - 🏥 Hospital patient monitoring
+    - 💊 Pharmacy intervention programs  
+    - 📱 Mobile health apps
+    - 🔬 Clinical research
+    """.format(st.session_state.get('accuracy', 0)))
 
 st.markdown("---")
-st.markdown("**🚀 Recommendation:** Combine all three for maximum impact!")
-st.markdown("- CSS for smooth UI animations")  
-st.markdown("- Plotly for data-driven charts")
-st.markdown("- Advanced CSS+Python for interactive simulations")
+st.markdown("*🤖 AI Drug Adherence Predictor - Educational Demo*")
