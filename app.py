@@ -483,17 +483,7 @@ if st.session_state.step5:
     - Created a real-time prediction system for MyWay
     - Enabled proactive patient interventions
     
-    **Clinical Impact:**
-    - **Early Risk Detection:** Identify non-adherent patients before treatment failure
-    - **Resource Optimization:** Focus intensive support on high-risk patients
-    - **Improved Outcomes:** Proactive interventions lead to better adherence rates
-    - **Cost Reduction:** Prevent expensive hospitalizations and treatment failures
-    
-    **Next Steps in Real Deployment:**
-    - Integration with Electronic Health Records
-    - Clinical validation studies
-    - Regulatory approval processes
-    - Healthcare provider training programs
+
     """.format(st.session_state.get('accuracy', 0)))
 
 st.markdown("---")
