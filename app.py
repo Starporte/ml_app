@@ -223,30 +223,138 @@ if st.session_state.step2:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-# STEP 4: Train AI Model
+# STEP 4: AI Deep Dive & Training
 if st.session_state.step3:
     st.markdown('<div class="step-box">', unsafe_allow_html=True)
-    st.markdown("### 🧠 Step 4: Train AI Model")
-    st.markdown("Use Random Forest algorithm (100 decision trees voting together)")
+    st.markdown("### 🧠 Step 4: Deep Dive into AI")
+    
+    # AI Categories explanation
+    st.markdown("**🤖 3 Main Types of AI:**")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        **🎯 Supervised Learning**
+        - Has labeled data (answers)
+        - Learns from examples
+        - Makes predictions
+        - **← We use this!**
+        """)
+        
+    with col2:
+        st.markdown("""
+        **🔍 Unsupervised Learning**
+        - No labels/answers
+        - Finds hidden patterns
+        - Groups similar data
+        - Example: Customer segments
+        """)
+        
+    with col3:
+        st.markdown("""
+        **🎮 Reinforcement Learning**
+        - Learns by trial/error
+        - Gets rewards/penalties
+        - Improves over time
+        - Example: Game AI
+        """)
+    
+    st.info("💡 **Our case:** Supervised Learning → Classification (Yes/No adherence)")
+    
+    # Algorithm choice
+    st.markdown("**🔧 Popular Classification Algorithms:**")
+    
+    algo_cols = st.columns(4)
+    with algo_cols[0]:
+        if st.button("🌳 Random Forest", key="rf_btn", help="Multiple decision trees voting"):
+            st.session_state.chosen_algo = "Random Forest"
+    with algo_cols[1]:
+        if st.button("🧮 Logistic Regression", key="lr_btn", help="Linear probability model"):
+            st.session_state.chosen_algo = "Logistic Regression"
+    with algo_cols[2]:
+        if st.button("🎯 SVM", key="svm_btn", help="Support Vector Machine"):
+            st.session_state.chosen_algo = "SVM"
+    with algo_cols[3]:
+        if st.button("🏘️ KNN", key="knn_btn", help="K-Nearest Neighbors"):
+            st.session_state.chosen_algo = "KNN"
+    
+    # Default choice
+    if 'chosen_algo' not in st.session_state:
+        st.session_state.chosen_algo = "Random Forest"
+    
+    st.success(f"**Selected:** {st.session_state.chosen_algo} ✅")
+    
+    # Random Forest Explanation
+    if st.session_state.chosen_algo == "Random Forest":
+        st.markdown("**🌳 How Random Forest Works:**")
+        
+        # Visual explanation with emojis
+        st.markdown("""
+        ```
+        🌳 Tree 1: "Age < 60? → Yes=Adherent, No=Check cost"
+        🌳 Tree 2: "Cost < $3000? → Yes=Adherent, No=Non-adherent"  
+        🌳 Tree 3: "Side effects < 3? → Yes=Adherent, No=Check age"
+        🌳 ... (97 more trees)
+        
+        📊 Final Vote: 60 trees say "Adherent", 40 say "Non-adherent"
+        ✅ Result: ADHERENT (60% confidence)
+        ```
+        """)
+        
+        # Simple diagram
+        st.markdown("**🗳️ Voting Process:**")
+        vote_data = pd.DataFrame({
+            'Prediction': ['Adherent', 'Non-Adherent'], 
+            'Trees Voting': [65, 35],
+            'Percentage': ['65%', '35%']
+        })
+        st.dataframe(vote_data, use_container_width=True)
+        
+        st.info("💡 **Why Random Forest?** More trees = more opinions = better accuracy!")
+    
+    # Training section
+    st.markdown("---")
+    st.markdown("**🚀 Let's Train Our AI:**")
     
     st.markdown('<div class="code-box">model = RandomForestClassifier(n_estimators=100); model.fit(X_train, y_train)</div>', unsafe_allow_html=True)
     
     if st.button("▶️ Execute Code", key="btn4"):
-        with st.spinner("Training AI model..."):
+        with st.spinner("🧠 Training AI model..."):
+            
+            # Progress bar simulation
+            progress_bar = st.progress(0)
+            import time
+            
+            for i in range(100):
+                time.sleep(0.01)
+                progress_bar.progress((i + 1))
+                if i % 20 == 0:
+                    st.text(f"Training tree {i+1}/100...")
+            
             model = RandomForestClassifier(n_estimators=100, random_state=42)
             model.fit(st.session_state.X_train, st.session_state.y_train)
             
             st.session_state.model = model
             st.session_state.step4 = True
         
-        # Feature importance
+        st.success("🎉 100 decision trees trained successfully!")
+        
+        # Feature importance with simple explanation
         importance = model.feature_importances_
         features = ['Age', 'Annual Cost', 'Side Effects']
         
-        fig = px.bar(x=features, y=importance, title="Feature Importance")
-        st.plotly_chart(fig, use_container_width=True)
+        st.markdown("**🎯 What the AI learned (Feature Importance):**")
         
-        st.markdown('<div class="success-output">✅ AI model trained with 100 decision trees</div>', unsafe_allow_html=True)
+        for i, (feature, imp) in enumerate(zip(features, importance)):
+            st.write(f"**{feature}:** {imp:.1%} importance")
+            st.progress(imp)
+        
+        # Simple interpretation
+        most_important = features[np.argmax(importance)]
+        st.info(f"🏆 **Most important factor:** {most_important}")
+        
+        st.markdown('<div class="success-output">✅ AI learned: {} is the key factor for adherence prediction!</div>'.format(most_important), unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
