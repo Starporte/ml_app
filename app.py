@@ -127,25 +127,67 @@ if st.session_state.step1:
     if st.button("▶️ Execute Code", key="btn2"):
         data = st.session_state.data
         
+        # Simple averages comparison
+        adherent_data = data[data['adherent'] == 1]
+        non_adherent_data = data[data['adherent'] == 0]
+        
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            fig1 = px.box(data, x='adherent', y='age', title="Age vs Adherence")
-            fig1.update_xaxes(ticktext=['No', 'Yes'], tickvals=[0, 1])
-            st.plotly_chart(fig1, use_container_width=True)
+            avg_age_yes = adherent_data['age'].mean()
+            avg_age_no = non_adherent_data['age'].mean()
+            
+            st.metric("👴 Average Age", "")
+            st.write(f"**Adherent:** {avg_age_yes:.0f} years")
+            st.write(f"**Non-adherent:** {avg_age_no:.0f} years")
+            
+            if avg_age_yes < avg_age_no:
+                st.success("✅ Younger patients take meds better!")
+            else:
+                st.info("📊 Older patients take meds better!")
             
         with col2:
-            fig2 = px.box(data, x='adherent', y='annual_cost', title="Cost vs Adherence")
-            fig2.update_xaxes(ticktext=['No', 'Yes'], tickvals=[0, 1])
-            st.plotly_chart(fig2, use_container_width=True)
+            avg_cost_yes = adherent_data['annual_cost'].mean()
+            avg_cost_no = non_adherent_data['annual_cost'].mean()
+            
+            st.metric("💰 Average Cost", "")
+            st.write(f"**Adherent:** ${avg_cost_yes:.0f}")
+            st.write(f"**Non-adherent:** ${avg_cost_no:.0f}")
+            
+            if avg_cost_yes < avg_cost_no:
+                st.success("✅ Cheaper = Better adherence!")
+            else:
+                st.info("📊 Expensive = Better adherence!")
             
         with col3:
-            fig3 = px.box(data, x='adherent', y='side_effects', title="Side Effects vs Adherence")
-            fig3.update_xaxes(ticktext=['No', 'Yes'], tickvals=[0, 1])
-            st.plotly_chart(fig3, use_container_width=True)
+            avg_effects_yes = adherent_data['side_effects'].mean()
+            avg_effects_no = non_adherent_data['side_effects'].mean()
+            
+            st.metric("😷 Average Side Effects", "")
+            st.write(f"**Adherent:** {avg_effects_yes:.1f}")
+            st.write(f"**Non-adherent:** {avg_effects_no:.1f}")
+            
+            if avg_effects_yes < avg_effects_no:
+                st.success("✅ Fewer side effects = Better!")
+            else:
+                st.info("📊 More side effects = Better!")
+        
+        # Simple bar chart
+        st.markdown("**📊 Quick Summary:**")
+        summary_data = pd.DataFrame({
+            'Group': ['Adherent', 'Non-Adherent'],
+            'Average Age': [avg_age_yes, avg_age_no],
+            'Average Cost': [avg_cost_yes, avg_cost_no],
+            'Side Effects': [avg_effects_yes, avg_effects_no]
+        })
+        
+        fig = px.bar(summary_data, x='Group', y='Average Age', 
+                     title="Age Comparison", color='Group',
+                     color_discrete_map={'Adherent': 'green', 'Non-Adherent': 'red'})
+        st.plotly_chart(fig, use_container_width=True)
         
         st.session_state.step2 = True
-        st.markdown('<div class="success-output">✅ Data patterns revealed</div>', unsafe_allow_html=True)
+        st.markdown('<div class="success-output">✅ Simple patterns found: Younger + Cheaper + Less side effects = Better adherence</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
