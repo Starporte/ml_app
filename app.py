@@ -9,7 +9,7 @@ import plotly.express as px
 
 # Page config
 st.set_page_config(
-    page_title="🤖 AI Drug Adherence Predictor",
+    page_title="My Way Drug Adherence Predictor",
     page_icon="💊",
     layout="wide"
 )
@@ -18,7 +18,7 @@ st.set_page_config(
 st.markdown("""
 <style>
     .main-header {
-        background: linear-gradient(90deg, #1f77b4, #ff7f0e);
+        background: linear-gradient(90deg, #772583, #4A1A4F);
         color: white;
         padding: 20px;
         text-align: center;
