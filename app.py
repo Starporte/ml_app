@@ -110,11 +110,9 @@ st.markdown("""
     <p><strong>MyWay</strong> is Sanofi's innovative patient support program that helps patients navigate their treatment journey. However, we face a critical challenge: <strong>50% of patients don't take their medications as prescribed.</strong></p>
     
     <p>Poor medication adherence leads to:</p>
-    <ul>
-        <li>Worsened patient outcomes</li>
-        <li>Increased healthcare costs (€125 billion annually in Europe)</li>
-        <li>Higher hospitalization rates</li>
-    </ul>
+    <p>• Worsened patient outcomes<br>
+    • Increased healthcare costs (€125 billion annually in Europe)<br>
+    • Higher hospitalization rates</p>
     
     <p><strong>Your Mission:</strong> As a data scientist, you'll build an AI system that can identify patients at risk of poor adherence before it happens, enabling proactive interventions.</p>
 </div>
@@ -483,7 +481,17 @@ if st.session_state.step5:
     - Created a real-time prediction system for MyWay
     - Enabled proactive patient interventions
     
-
+    **Clinical Impact:**
+    - **Early Risk Detection:** Identify non-adherent patients before treatment failure
+    - **Resource Optimization:** Focus intensive support on high-risk patients
+    - **Improved Outcomes:** Proactive interventions lead to better adherence rates
+    - **Cost Reduction:** Prevent expensive hospitalizations and treatment failures
+    
+    **Next Steps in Real Deployment:**
+    - Integration with Electronic Health Records
+    - Clinical validation studies
+    - Regulatory approval processes
+    - Healthcare provider training programs
     """.format(st.session_state.get('accuracy', 0)))
 
 st.markdown("---")
