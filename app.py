@@ -321,6 +321,59 @@ if st.session_state.step3:
         st.dataframe(vote_data, use_container_width=True)
         
         st.info("💡 **Why Random Forest?** More trees = more opinions = better accuracy!")
+        
+        # ===== NOUVELLE SECTION : AFFICHAGE DE L'IMAGE =====
+        st.markdown("---")
+        st.markdown("**📊 Exemple d'Arbre de Décision :**")
+        
+        # Afficher l'image
+        try:
+            st.image("decision_tree.png", 
+                     caption="Arbre de décision pour prédire l'adhérence aux médicaments",
+                     use_column_width=True)
+            
+            # Explication de l'image
+            st.markdown("""
+            **🎯 Comment lire cet arbre :**
+            - 🟫 **Rectangles bruns** = Variables analysées (Age, Coût, Effets)
+            - 🟡 **Losanges jaunes/oranges** = Questions/Conditions
+            - 🔴 **Cercles rouges** = NON ADHÉRENT
+            - 🟢 **Cercles verts** = ADHÉRENT
+            
+            **💡 Exemple de parcours :**
+            Patient de 45 ans, coût $1500, 1 effet secondaire :
+            1. Age < 60 ? → OUI (va à droite)
+            2. Coût < $2000 ? → OUI (va à droite) 
+            3. Effets < 2 ? → OUI → **✅ ADHÉRENT**
+            
+            **🌳 Dans la Random Forest :**
+            - Chaque arbre est légèrement différent
+            - 100 arbres donnent leur prédiction
+            - La majorité l'emporte pour le résultat final !
+            """)
+            
+        except FileNotFoundError:
+            st.warning("📁 Image 'decision_tree.png' non trouvée dans le dossier")
+            st.markdown("""
+            **🌳 ARBRE DE DÉCISION (Version Texte) :**
+            ```
+            📊 Patient Data
+                 │
+                 ▼
+            👴 Age < 60 ?
+              ├─ OUI ➡️ 💰 Coût < $2000 ?
+              │          ├─ OUI ➡️ 😷 Effets < 2 ?
+              │          │          ├─ OUI ➡️ ✅ ADHÉRENT
+              │          │          └─ NON ➡️ ❌ NON ADHÉRENT  
+              │          └─ NON ➡️ ❌ NON ADHÉRENT
+              │
+              └─ NON ➡️ 💰 Coût < $2000 ?
+                         ├─ OUI ➡️ 😷 Effets < 2 ?
+                         │          ├─ OUI ➡️ ✅ ADHÉRENT
+                         │          └─ NON ➡️ ❌ NON ADHÉRENT
+                         └─ NON ➡️ ❌ NON ADHÉRENT
+            ```
+            """)
     
     # Training section
     st.markdown("---")
