@@ -70,13 +70,13 @@ st.markdown("""
         margin: 10px 0;
     }
     
-    .sanofi-logo {
+    /* Fixed logo positioning - only targets the logo container */
+    .logo-container {
         position: fixed;
         bottom: 20px;
         right: 20px;
-        width: 80px;
-        opacity: 0.7;
         z-index: 1000;
+        opacity: 0.7;
     }
     
     .workflow-box {
@@ -89,20 +89,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Sanofi Logo
+# Sanofi Logo with specific container
 try:
+    # Create a specific container for the logo
+    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
     st.image("sanofi_logo.jpg", width=80)
-    st.markdown("""
-    <style>
-    .element-container:has(img) {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-        opacity: 0.7;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 except:
     pass
 
@@ -317,11 +309,10 @@ if st.session_state.step3:
 - Robust against outliers and missing data
 - Gives confidence scores for predictions""")
     
-    # Show decision tree visualization
+    # Show decision tree visualization - this will now display normally
     try:
         st.image("decision_tree.png", 
-                 caption="Example Decision Tree: How AI decides patient adherence",
-                 use_column_width=True)
+                 caption="Example Decision Tree: How AI decides patient adherence")
         
         st.markdown("""**How the Algorithm Works:**
 - Each tree asks different questions about the patient
