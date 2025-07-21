@@ -70,6 +70,20 @@ st.markdown("""
         margin: 10px 0;
     }
     
+    /* Blue buttons styling */
+    .stButton > button {
+        background-color: #007bff !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    
+    .stButton > button:hover {
+        background-color: #0056b3 !important;
+        color: white !important;
+    }
+    
     /* Fixed logo positioning - only targets the logo container */
     .logo-container {
         position: fixed;
@@ -161,7 +175,7 @@ For this demo, we'll generate 1,000 synthetic patient records with key adherence
 
 st.markdown('<div class="code-box">np.random.seed(42); data = generate_realistic_patient_data(1000)</div>', unsafe_allow_html=True)
 
-if st.button("Execute: Generate Patient Dataset", key="btn1"):
+if st.button("▶️ Execute: Generate Patient Dataset", key="btn1"):
     with st.spinner("Generating realistic patient data..."):
         np.random.seed(42)
         n_patients = 1000
@@ -217,7 +231,7 @@ This is where domain expertise meets data science. Clinical research suggests th
     
     st.markdown('<div class="code-box">analyze_adherence_patterns(data)</div>', unsafe_allow_html=True)
     
-    if st.button("Execute: Analyze Adherence Drivers", key="btn2"):
+    if st.button("▶️ Execute: Analyze Adherence Drivers", key="btn2"):
         data = st.session_state.data
         
         adherent_data = data[data['adherent'] == 1]
@@ -270,7 +284,7 @@ This prevents overfitting and ensures our model will work on real patients.""")
     
     st.markdown('<div class="code-box">X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.3)</div>', unsafe_allow_html=True)
     
-    if st.button("Execute: Prepare Training Data", key="btn3"):
+    if st.button("▶️ Execute: Prepare Training Data", key="btn3"):
         data = st.session_state.data
         
         X = data[['age', 'annual_cost', 'side_effects']]
@@ -334,7 +348,7 @@ Result: ADHERENT (65% confidence)
     
     st.markdown('<div class="code-box">model = RandomForestClassifier(n_estimators=100); model.fit(X_train, y_train)</div>', unsafe_allow_html=True)
     
-    if st.button("Execute: Train AI Model", key="btn4"):
+    if st.button("▶️ Execute: Train AI Model", key="btn4"):
         with st.spinner("Training Random Forest with 100 decision trees..."):
             progress_bar = st.progress(0)
             import time
@@ -374,7 +388,7 @@ if st.session_state.step4:
     
     st.markdown('<div class="code-box">predictions = model.predict(X_test); clinical_accuracy = accuracy_score(y_test, predictions)</div>', unsafe_allow_html=True)
     
-    if st.button("Execute: Validate Model Performance", key="btn5"):
+    if st.button("▶️ Execute: Validate Model Performance", key="btn5"):
         model = st.session_state.model
         X_test = st.session_state.X_test
         y_test = st.session_state.y_test
@@ -444,7 +458,7 @@ if st.session_state.step5:
         patient_cost = st.slider("Annual Treatment Cost ($)", 500, 8000, 2000)
         patient_effects = st.slider("Reported Side Effects", 0, 8, 2)
         
-        if st.button("Execute: Predict Adherence Risk", key="btn6"):
+        if st.button("▶️ Execute: Predict Adherence Risk", key="btn6"):
             model = st.session_state.model
             
             new_patient = np.array([[patient_age, patient_cost, patient_effects]])
@@ -496,18 +510,7 @@ if st.session_state.step5:
     - Trained an AI model with {:.1%} clinical accuracy  
     - Created a real-time prediction system for MyWay
     - Enabled proactive patient interventions
-    
-    **Clinical Impact:**
-    - **Early Risk Detection:** Identify non-adherent patients before treatment failure
-    - **Resource Optimization:** Focus intensive support on high-risk patients
-    - **Improved Outcomes:** Proactive interventions lead to better adherence rates
-    - **Cost Reduction:** Prevent expensive hospitalizations and treatment failures
-    
-    **Next Steps in Real Deployment:**
-    - Integration with Electronic Health Records
-    - Clinical validation studies
-    - Regulatory approval processes
-    - Healthcare provider training programs
+
     """.format(st.session_state.get('accuracy', 0)))
 
 st.markdown("---")
