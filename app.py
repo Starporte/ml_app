@@ -132,8 +132,8 @@ st.markdown("""
 st.markdown("""
 **Poor medication adherence leads to:**
 - Worsened patient outcomes
-- Increased healthcare costs (€125 billion annually in Europe)  
-- Higher hospitalization rates
+- Increased healthcare costs  
+- Opportunities Missed
 
 **Your Mission:** As a data scientist, you'll build an AI system that can identify patients at risk of poor adherence before it happens, enabling proactive interventions.
 """)
@@ -144,7 +144,7 @@ with col2:
     if st.button("🚀 JUMP INTO ACTION", key="jump_action", type="primary", use_container_width=True):
         st.session_state.show_workflow = True
         st.markdown("Let's start building your AI system!")
-        st.balloons()
+
 
 # Initialize session state
 for key in ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'data', 'model', 'show_workflow']:
@@ -157,7 +157,7 @@ if st.session_state.show_workflow:
     <div class="workflow-box">
         <h3>The Data Science Workflow</h3>
         <p>Every data scientist follows these core steps:</p>
-        <strong>1. Understand the Problem</strong> → <strong>2. Collect & Explore Data</strong> → <strong>3. Prepare Data</strong> → <strong>4. Build Model</strong> → <strong>5. Evaluate Performance</strong> → <strong>6. Deploy & Predict</strong>
+        <strong>1. Collect Data</strong> → <strong>2. Explore/ Understand Data</strong> → <strong>3. Prepare/ Clean Data</strong> → <strong>4. Build Model</strong> → <strong>5. Evaluate Performance</strong> → <strong>6. Deploy & Predict</strong>
     </div>
     """, unsafe_allow_html=True)
 
