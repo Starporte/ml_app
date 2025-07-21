@@ -66,12 +66,12 @@ st.markdown("""
 # Header
 st.markdown("""
 <div class="main-header">
-    <h1>🤖 AI Drug Adherence Predictor</h1>
-    <h3>Learn AI Step by Step</h3>
+    <h1>My Way Drug Adherence Predictorr</h1>
+    <h3>You can DO AI</h3>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("**Build an AI that predicts if patients will take their medication correctly**")
+st.markdown("**Build an ML Alogorithm that predicts if patients will take their medication correctly**")
 
 # Initialize session state
 for key in ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'data', 'model']:
@@ -80,7 +80,7 @@ for key in ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'data', 'model
 
 # STEP 1: Generate Data
 st.markdown('<div class="step-box">', unsafe_allow_html=True)
-st.markdown("### 📊 Step 1: Create Patient Data")
+st.markdown("### Step 1: Create Patient Data")
 st.markdown("Generate synthetic patient data with age, cost, and side effects")
 
 st.markdown('<div class="code-box">np.random.seed(42); data = generate_patient_data(1000)</div>', unsafe_allow_html=True)
