@@ -120,15 +120,17 @@ st.markdown("""
 <div class="story-section">
     <h2>The Challenge</h2>
     <p><strong>MyWay</strong> is Sanofi's innovative patient support program that helps patients navigate their treatment journey. However, we face a critical challenge: <strong>50% of patients don't take their medications as prescribed.</strong></p>
-    
-    <p><strong>Poor medication adherence leads to:</strong></p>
-    <p>• Worsened patient outcomes<br>
-    • Increased healthcare costs (€125 billion annually in Europe)<br>
-    • Higher hospitalization rates</p>
-    
-    <p><strong>Your Mission:</strong> As a data scientist, you'll build an AI system that can identify patients at risk of poor adherence before it happens, enabling proactive interventions.</p>
 </div>
 """, unsafe_allow_html=True)
+
+st.markdown("""
+**Poor medication adherence leads to:**
+- Worsened patient outcomes
+- Increased healthcare costs (€125 billion annually in Europe)  
+- Higher hospitalization rates
+
+**Your Mission:** As a data scientist, you'll build an AI system that can identify patients at risk of poor adherence before it happens, enabling proactive interventions.
+""")
 
 # Data Science Workflow
 st.markdown("""
