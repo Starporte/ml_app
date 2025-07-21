@@ -108,7 +108,7 @@ try:
     # Create a specific container for the logo
     st.markdown('<div class="logo-container">', unsafe_allow_html=True)
     st.image("sanofi_logo.jpg", width=80)
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 except:
     pass
 
@@ -146,6 +146,11 @@ with col2:
         st.markdown("Let's start building your AI system!")
         st.balloons()
 
+# Initialize session state
+for key in ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'data', 'model', 'show_workflow']:
+    if key not in st.session_state:
+        st.session_state[key] = False
+
 # Data Science Workflow - only show after "Jump into Action" is clicked
 if st.session_state.show_workflow:
     st.markdown("""
@@ -156,16 +161,10 @@ if st.session_state.show_workflow:
     </div>
     """, unsafe_allow_html=True)
 
-# Initialize session state
-for key in ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'data', 'model', 'show_workflow']:
-    if key not in st.session_state:
-        st.session_state[key] = False
-
-# STEP 1: Data Collection - only show after workflow is revealed
-if st.session_state.show_workflow:
+    # STEP 1: Data Collection
     st.markdown('<div class="step-box">', unsafe_allow_html=True)
-st.markdown("### Step 1: Data Collection - Understanding Patient Patterns")
-st.markdown("""**The Data Scientist's First Task:** Gather and generate realistic patient data that mirrors real-world adherence patterns.
+    st.markdown("### Step 1: Data Collection - Understanding Patient Patterns")
+    st.markdown("""**The Data Scientist's First Task:** Gather and generate realistic patient data that mirrors real-world adherence patterns.
 
 In the real MyWay program, we would analyze:
 - Patient demographics and medical history
@@ -175,169 +174,169 @@ In the real MyWay program, we would analyze:
 
 For this demo, we'll generate 1,000 synthetic patient records with key adherence factors.""")
 
-st.markdown('<div class="code-box">np.random.seed(42); data = generate_realistic_patient_data(1000)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="code-box">np.random.seed(42); data = generate_realistic_patient_data(1000)</div>', unsafe_allow_html=True)
 
-if st.button("▶️ Execute: Generate Patient Dataset", key="btn1"):
-    with st.spinner("Generating realistic patient data..."):
-        np.random.seed(42)
-        n_patients = 1000
+    if st.button("▶️ Execute: Generate Patient Dataset", key="btn1"):
+        with st.spinner("Generating realistic patient data..."):
+            np.random.seed(42)
+            n_patients = 1000
+            
+            # Generate realistic patient data
+            age = np.random.normal(65, 15, n_patients)
+            age = np.clip(age, 18, 90)
+            
+            cost = np.random.exponential(2000, n_patients)
+            cost = np.clip(cost, 500, 8000)
+            
+            side_effects = np.random.poisson(2, n_patients)
+            side_effects = np.clip(side_effects, 0, 8)
+            
+            # Generate adherence based on clinical insights
+            adherence_score = (-0.02 * age - 0.0003 * cost - 0.5 * side_effects + 
+                              np.random.normal(0, 1, n_patients))
+            adherence = (adherence_score > np.median(adherence_score)).astype(int)
+            
+            data = pd.DataFrame({
+                'age': age.round(0).astype(int),
+                'annual_cost': cost.round(0).astype(int),
+                'side_effects': side_effects,
+                'adherent': adherence
+            })
+            
+            st.session_state.data = data
+            st.session_state.step1 = True
         
-        # Generate realistic patient data
-        age = np.random.normal(65, 15, n_patients)
-        age = np.clip(age, 18, 90)
+        st.markdown(f'<div class="success-output">Dataset Created: {len(data)} patient records ready for analysis</div>', unsafe_allow_html=True)
         
-        cost = np.random.exponential(2000, n_patients)
-        cost = np.clip(cost, 500, 8000)
-        
-        side_effects = np.random.poisson(2, n_patients)
-        side_effects = np.clip(side_effects, 0, 8)
-        
-        # Generate adherence based on clinical insights
-        adherence_score = (-0.02 * age - 0.0003 * cost - 0.5 * side_effects + 
-                          np.random.normal(0, 1, n_patients))
-        adherence = (adherence_score > np.median(adherence_score)).astype(int)
-        
-        data = pd.DataFrame({
-            'age': age.round(0).astype(int),
-            'annual_cost': cost.round(0).astype(int),
-            'side_effects': side_effects,
-            'adherent': adherence
-        })
-        
-        st.session_state.data = data
-        st.session_state.step1 = True
-    
-    st.markdown(f'<div class="success-output">Dataset Created: {len(data)} patient records ready for analysis</div>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.dataframe(data.head(10))
-    with col2:
-        adherent_pct = data['adherent'].mean() * 100
-        st.metric("Baseline Adherence Rate", f"{adherent_pct:.1f}%")
-        st.markdown("**Key Variables:**")
-        st.write("• Age: Patient age in years")
-        st.write("• Annual Cost: Treatment cost per year")  
-        st.write("• Side Effects: Number of reported side effects")
-        st.write("• Adherent: 1=Yes, 0=No")
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# STEP 2: Data Analysis
-if st.session_state.step1:
-    st.markdown('<div class="step-box">', unsafe_allow_html=True)
-    st.markdown("### Step 2: Exploratory Data Analysis - Finding the Patterns")
-    st.markdown("""**The Data Scientist's Analysis:** Before building any model, we need to understand what drives adherence.
-
-This is where domain expertise meets data science. Clinical research suggests that cost, side effects, and patient age are key factors.""")
-    
-    st.markdown('<div class="code-box">analyze_adherence_patterns(data)</div>', unsafe_allow_html=True)
-    
-    if st.button("▶️ Execute: Analyze Adherence Drivers", key="btn2"):
-        data = st.session_state.data
-        
-        adherent_data = data[data['adherent'] == 1]
-        non_adherent_data = data[data['adherent'] == 0]
-        
-        col1, col2, col3 = st.columns(3)
-        
+        col1, col2 = st.columns(2)
         with col1:
-            avg_age_yes = adherent_data['age'].mean()
-            avg_age_no = non_adherent_data['age'].mean()
-            st.metric("Average Age", "")
-            st.write(f"**Adherent:** {avg_age_yes:.0f} years")
-            st.write(f"**Non-adherent:** {avg_age_no:.0f} years")
-            if avg_age_yes < avg_age_no:
-                st.success("Insight: Younger patients show better adherence")
-            
+            st.dataframe(data.head(10))
         with col2:
-            avg_cost_yes = adherent_data['annual_cost'].mean()
-            avg_cost_no = non_adherent_data['annual_cost'].mean()
-            st.metric("Average Annual Cost", "")
-            st.write(f"**Adherent:** ${avg_cost_yes:.0f}")
-            st.write(f"**Non-adherent:** ${avg_cost_no:.0f}")
-            if avg_cost_yes < avg_cost_no:
-                st.success("Insight: Lower costs improve adherence")
-            
-        with col3:
-            avg_effects_yes = adherent_data['side_effects'].mean()
-            avg_effects_no = non_adherent_data['side_effects'].mean()
-            st.metric("Average Side Effects", "")
-            st.write(f"**Adherent:** {avg_effects_yes:.1f}")
-            st.write(f"**Non-adherent:** {avg_effects_no:.1f}")
-            if avg_effects_yes < avg_effects_no:
-                st.success("Insight: Fewer side effects = better adherence")
-        
-        st.session_state.step2 = True
-        st.markdown('<div class="success-output">Key Pattern Identified: Age, Cost, and Side Effects are the primary adherence drivers</div>', unsafe_allow_html=True)
-    
+            adherent_pct = data['adherent'].mean() * 100
+            st.metric("Baseline Adherence Rate", f"{adherent_pct:.1f}%")
+            st.markdown("**Key Variables:**")
+            st.write("• Age: Patient age in years")
+            st.write("• Annual Cost: Treatment cost per year")  
+            st.write("• Side Effects: Number of reported side effects")
+            st.write("• Adherent: 1=Yes, 0=No")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-# STEP 3: Data Preparation
-if st.session_state.step2:
-    st.markdown('<div class="step-box">', unsafe_allow_html=True)
-    st.markdown("### Step 3: Data Preparation - Setting Up for Machine Learning")
-    st.markdown("""**Critical Data Science Step:** Split the data into training and testing sets.
+    # STEP 2: Data Analysis
+    if st.session_state.step1:
+        st.markdown('<div class="step-box">', unsafe_allow_html=True)
+        st.markdown("### Step 2: Exploratory Data Analysis - Finding the Patterns")
+        st.markdown("""**The Data Scientist's Analysis:** Before building any model, we need to understand what drives adherence.
+
+This is where domain expertise meets data science. Clinical research suggests that cost, side effects, and patient age are key factors.""")
+        
+        st.markdown('<div class="code-box">analyze_adherence_patterns(data)</div>', unsafe_allow_html=True)
+        
+        if st.button("▶️ Execute: Analyze Adherence Drivers", key="btn2"):
+            data = st.session_state.data
+            
+            adherent_data = data[data['adherent'] == 1]
+            non_adherent_data = data[data['adherent'] == 0]
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                avg_age_yes = adherent_data['age'].mean()
+                avg_age_no = non_adherent_data['age'].mean()
+                st.metric("Average Age", "")
+                st.write(f"**Adherent:** {avg_age_yes:.0f} years")
+                st.write(f"**Non-adherent:** {avg_age_no:.0f} years")
+                if avg_age_yes < avg_age_no:
+                    st.success("Insight: Younger patients show better adherence")
+                
+            with col2:
+                avg_cost_yes = adherent_data['annual_cost'].mean()
+                avg_cost_no = non_adherent_data['annual_cost'].mean()
+                st.metric("Average Annual Cost", "")
+                st.write(f"**Adherent:** ${avg_cost_yes:.0f}")
+                st.write(f"**Non-adherent:** ${avg_cost_no:.0f}")
+                if avg_cost_yes < avg_cost_no:
+                    st.success("Insight: Lower costs improve adherence")
+                
+            with col3:
+                avg_effects_yes = adherent_data['side_effects'].mean()
+                avg_effects_no = non_adherent_data['side_effects'].mean()
+                st.metric("Average Side Effects", "")
+                st.write(f"**Adherent:** {avg_effects_yes:.1f}")
+                st.write(f"**Non-adherent:** {avg_effects_no:.1f}")
+                if avg_effects_yes < avg_effects_no:
+                    st.success("Insight: Fewer side effects = better adherence")
+            
+            st.session_state.step2 = True
+            st.markdown('<div class="success-output">Key Pattern Identified: Age, Cost, and Side Effects are the primary adherence drivers</div>', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # STEP 3: Data Preparation
+    if st.session_state.step2:
+        st.markdown('<div class="step-box">', unsafe_allow_html=True)
+        st.markdown("### Step 3: Data Preparation - Setting Up for Machine Learning")
+        st.markdown("""**Critical Data Science Step:** Split the data into training and testing sets.
 
 **Training Set (70%):** Used to teach the AI model patterns
 **Test Set (30%):** Used to evaluate how well the model performs on unseen data
 
 This prevents overfitting and ensures our model will work on real patients.""")
-    
-    st.markdown('<div class="code-box">X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.3)</div>', unsafe_allow_html=True)
-    
-    if st.button("▶️ Execute: Prepare Training Data", key="btn3"):
-        data = st.session_state.data
         
-        X = data[['age', 'annual_cost', 'side_effects']]
-        y = data['adherent']
+        st.markdown('<div class="code-box">X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.3)</div>', unsafe_allow_html=True)
         
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        if st.button("▶️ Execute: Prepare Training Data", key="btn3"):
+            data = st.session_state.data
+            
+            X = data[['age', 'annual_cost', 'side_effects']]
+            y = data['adherent']
+            
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+            
+            st.session_state.X_train = X_train
+            st.session_state.X_test = X_test
+            st.session_state.y_train = y_train
+            st.session_state.y_test = y_test
+            st.session_state.step3 = True
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Training Set", f"{len(X_train)} patients")
+                st.write("Used to train the AI model")
+            with col2:
+                st.metric("Test Set", f"{len(X_test)} patients") 
+                st.write("Used to validate performance")
+            
+            st.markdown('<div class="success-output">Data successfully prepared for machine learning</div>', unsafe_allow_html=True)
         
-        st.session_state.X_train = X_train
-        st.session_state.X_test = X_test
-        st.session_state.y_train = y_train
-        st.session_state.y_test = y_test
-        st.session_state.step3 = True
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Training Set", f"{len(X_train)} patients")
-            st.write("Used to train the AI model")
-        with col2:
-            st.metric("Test Set", f"{len(X_test)} patients") 
-            st.write("Used to validate performance")
-        
-        st.markdown('<div class="success-output">Data successfully prepared for machine learning</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# STEP 4: Model Building & Training
-if st.session_state.step3:
-    st.markdown('<div class="step-box">', unsafe_allow_html=True)
-    st.markdown("### Step 4: AI Model Development - Building the Prediction Engine")
-    
-    st.markdown("""**Algorithm Selection:** For this healthcare application, we'll use Random Forest - an ensemble method that combines multiple decision trees.
+    # STEP 4: Model Building & Training
+    if st.session_state.step3:
+        st.markdown('<div class="step-box">', unsafe_allow_html=True)
+        st.markdown("### Step 4: AI Model Development - Building the Prediction Engine")
+        
+        st.markdown("""**Algorithm Selection:** For this healthcare application, we'll use Random Forest - an ensemble method that combines multiple decision trees.
 
 **Why Random Forest for Healthcare?**
 - Handles mixed data types (age, cost, categorical symptoms)
 - Provides interpretable results that clinicians can understand  
 - Robust against outliers and missing data
 - Gives confidence scores for predictions""")
-    
-    # Show decision tree visualization - this will now display normally
-    try:
-        st.image("decision_tree.png", 
-                 caption="Example Decision Tree: How AI decides patient adherence")
         
-        st.markdown("""**How the Algorithm Works:**
+        # Show decision tree visualization - this will now display normally
+        try:
+            st.image("decision_tree.png", 
+                     caption="Example Decision Tree: How AI decides patient adherence")
+            
+            st.markdown("""**How the Algorithm Works:**
 - Each tree asks different questions about the patient
 - Trees vote on the final prediction  
 - 100 trees provide more reliable predictions than 1 tree
 - The majority vote determines adherence likelihood""")
-        
-    except FileNotFoundError:
-        st.markdown("""**Random Forest Concept:**
+            
+        except FileNotFoundError:
+            st.markdown("""**Random Forest Concept:**
 ```
 Tree 1: Age < 60? → Cost < $2000? → Side Effects < 2? → ADHERENT
 Tree 2: Side Effects < 3? → Age < 65? → Cost < $3000? → ADHERENT  
@@ -347,184 +346,184 @@ Tree 3: Cost < $1500? → Age < 70? → Side Effects < 4? → ADHERENT
 Final Vote: 65 trees say "ADHERENT", 35 say "NON-ADHERENT"
 Result: ADHERENT (65% confidence)
 ```""")
-    
-    st.markdown('<div class="code-box">model = RandomForestClassifier(n_estimators=100); model.fit(X_train, y_train)</div>', unsafe_allow_html=True)
-    
-    if st.button("▶️ Execute: Train AI Model", key="btn4"):
-        with st.spinner("Training Random Forest with 100 decision trees..."):
-            progress_bar = st.progress(0)
-            import time
+        
+        st.markdown('<div class="code-box">model = RandomForestClassifier(n_estimators=100); model.fit(X_train, y_train)</div>', unsafe_allow_html=True)
+        
+        if st.button("▶️ Execute: Train AI Model", key="btn4"):
+            with st.spinner("Training Random Forest with 100 decision trees..."):
+                progress_bar = st.progress(0)
+                import time
+                
+                for i in range(100):
+                    time.sleep(0.01)
+                    progress_bar.progress((i + 1))
+                
+                model = RandomForestClassifier(n_estimators=100, random_state=42)
+                model.fit(st.session_state.X_train, st.session_state.y_train)
+                
+                st.session_state.model = model
+                st.session_state.step4 = True
             
-            for i in range(100):
-                time.sleep(0.01)
-                progress_bar.progress((i + 1))
+            # Show what the AI learned
+            importance = model.feature_importances_
+            features = ['Age', 'Annual Cost', 'Side Effects']
             
-            model = RandomForestClassifier(n_estimators=100, random_state=42)
-            model.fit(st.session_state.X_train, st.session_state.y_train)
+            st.markdown("**AI Learning Results - Feature Importance:**")
             
-            st.session_state.model = model
-            st.session_state.step4 = True
+            for feature, imp in zip(features, importance):
+                st.write(f"**{feature}:** {imp:.1%} importance")
+                st.progress(imp)
+            
+            most_important = features[np.argmax(importance)]
+            st.markdown('<div class="success-output">Model Training Complete: {} identified as the strongest predictor</div>'.format(most_important), unsafe_allow_html=True)
         
-        # Show what the AI learned
-        importance = model.feature_importances_
-        features = ['Age', 'Annual Cost', 'Side Effects']
-        
-        st.markdown("**AI Learning Results - Feature Importance:**")
-        
-        for feature, imp in zip(features, importance):
-            st.write(f"**{feature}:** {imp:.1%} importance")
-            st.progress(imp)
-        
-        most_important = features[np.argmax(importance)]
-        st.markdown('<div class="success-output">Model Training Complete: {} identified as the strongest predictor</div>'.format(most_important), unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# STEP 5: Model Evaluation
-if st.session_state.step4:
-    st.markdown('<div class="step-box">', unsafe_allow_html=True)
-    st.markdown("### Step 5: Performance Evaluation - Validating Clinical Utility")
-    st.markdown("""**The Critical Question:** Can our AI system make accurate predictions on patients it has never seen before?
+    # STEP 5: Model Evaluation
+    if st.session_state.step4:
+        st.markdown('<div class="step-box">', unsafe_allow_html=True)
+        st.markdown("### Step 5: Performance Evaluation - Validating Clinical Utility")
+        st.markdown("""**The Critical Question:** Can our AI system make accurate predictions on patients it has never seen before?
 
 **Clinical Validation:** We test on the 30% of data the model never saw during training. This simulates real-world deployment.""")
-    
-    st.markdown('<div class="code-box">predictions = model.predict(X_test); clinical_accuracy = accuracy_score(y_test, predictions)</div>', unsafe_allow_html=True)
-    
-    if st.button("▶️ Execute: Validate Model Performance", key="btn5"):
-        model = st.session_state.model
-        X_test = st.session_state.X_test
-        y_test = st.session_state.y_test
         
-        predictions = model.predict(X_test)
-        accuracy = accuracy_score(y_test, predictions)
+        st.markdown('<div class="code-box">predictions = model.predict(X_test); clinical_accuracy = accuracy_score(y_test, predictions)</div>', unsafe_allow_html=True)
         
-        st.session_state.predictions = predictions
-        st.session_state.accuracy = accuracy
-        st.session_state.step5 = True
+        if st.button("▶️ Execute: Validate Model Performance", key="btn5"):
+            model = st.session_state.model
+            X_test = st.session_state.X_test
+            y_test = st.session_state.y_test
+            
+            predictions = model.predict(X_test)
+            accuracy = accuracy_score(y_test, predictions)
+            
+            st.session_state.predictions = predictions
+            st.session_state.accuracy = accuracy
+            st.session_state.step5 = True
+            
+            # Clinical performance metrics
+            cm = confusion_matrix(y_test, predictions)
+            tn, fp, fn, tp = cm.ravel()
+            
+            # Main accuracy display
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <h2 style="color: #28a745; margin: 0;">{accuracy:.1%}</h2>
+                    <h3 style="margin: 5px 0;">Clinical Accuracy</h3>
+                    <p style="margin: 0; color: #666;">Correctly predicted {tp + tn} out of {len(y_test)} patients</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Clinical interpretation
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**Correct Predictions:**")
+                st.metric("Adherent Patients Identified", f"{tp}")
+                st.metric("Non-Adherent Patients Identified", f"{tn}")
+                
+            with col2:
+                st.markdown("**Prediction Errors:**")
+                st.metric("Missed Non-Adherent Patients", f"{fn}")
+                st.metric("False Adherence Predictions", f"{fp}")
+            
+            # Clinical impact assessment
+            if accuracy > 0.8:
+                st.success("Excellent performance - Ready for clinical deployment")
+            elif accuracy > 0.7:
+                st.warning("Good performance - Consider additional refinement")
+            else:
+                st.error("Performance needs improvement")
+            
+            st.markdown('<div class="success-output">Clinical Validation Complete: {:.1%} accuracy on unseen patients</div>'.format(accuracy), unsafe_allow_html=True)
         
-        # Clinical performance metrics
-        cm = confusion_matrix(y_test, predictions)
-        tn, fp, fn, tp = cm.ravel()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # STEP 6: Real-time Prediction
+    if st.session_state.step5:
+        st.markdown('<div class="step-box">', unsafe_allow_html=True)
+        st.markdown("### Step 6: Clinical Deployment - Real Patient Predictions")
+        st.markdown("""**MyWay Integration:** Your AI model is now ready to help healthcare providers identify at-risk patients in real-time.
+
+**Clinical Workflow:** When a new patient enrolls in MyWay, enter their information below to get an adherence prediction.""")
         
-        # Main accuracy display
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown(f"""
-            <div class="metric-card">
-                <h2 style="color: #28a745; margin: 0;">{accuracy:.1%}</h2>
-                <h3 style="margin: 5px 0;">Clinical Accuracy</h3>
-                <p style="margin: 0; color: #666;">Correctly predicted {tp + tn} out of {len(y_test)} patients</p>
-            </div>
-            """, unsafe_allow_html=True)
+        st.markdown('<div class="code-box">adherence_prediction = predict_patient_adherence(patient_data)</div>', unsafe_allow_html=True)
         
-        # Clinical interpretation
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("**Correct Predictions:**")
-            st.metric("Adherent Patients Identified", f"{tp}")
-            st.metric("Non-Adherent Patients Identified", f"{tn}")
+            st.markdown("**New Patient Intake:**")
+            patient_age = st.slider("Patient Age", 18, 90, 65)
+            patient_cost = st.slider("Annual Treatment Cost ($)", 500, 8000, 2000)
+            patient_effects = st.slider("Reported Side Effects", 0, 8, 2)
             
+            if st.button("▶️ Execute: Predict Adherence Risk", key="btn6"):
+                model = st.session_state.model
+                
+                new_patient = np.array([[patient_age, patient_cost, patient_effects]])
+                prediction = model.predict(new_patient)[0]
+                probability = model.predict_proba(new_patient)[0]
+                
+                if prediction == 1:
+                    st.success(f"LIKELY ADHERENT - Confidence: {probability[1]:.1%}")
+                    st.markdown("**Recommendation:** Standard MyWay support program")
+                    st.balloons()
+                else:
+                    st.error(f"AT RISK FOR NON-ADHERENCE - Confidence: {probability[0]:.1%}")
+                    st.markdown("**Recommendation:** Enhanced support with personalized interventions")
+                
+                st.markdown('<div class="success-output">Patient risk assessment complete</div>', unsafe_allow_html=True)
+        
         with col2:
-            st.markdown("**Prediction Errors:**")
-            st.metric("Missed Non-Adherent Patients", f"{fn}")
-            st.metric("False Adherence Predictions", f"{fp}")
-        
-        # Clinical impact assessment
-        if accuracy > 0.8:
-            st.success("Excellent performance - Ready for clinical deployment")
-        elif accuracy > 0.7:
-            st.warning("Good performance - Consider additional refinement")
-        else:
-            st.error("Performance needs improvement")
-        
-        st.markdown('<div class="success-output">Clinical Validation Complete: {:.1%} accuracy on unseen patients</div>'.format(accuracy), unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# STEP 6: Real-time Prediction
-if st.session_state.step5:
-    st.markdown('<div class="step-box">', unsafe_allow_html=True)
-    st.markdown("### Step 6: Clinical Deployment - Real Patient Predictions")
-    st.markdown("""**MyWay Integration:** Your AI model is now ready to help healthcare providers identify at-risk patients in real-time.
-
-**Clinical Workflow:** When a new patient enrolls in MyWay, enter their information below to get an adherence prediction.""")
-    
-    st.markdown('<div class="code-box">adherence_prediction = predict_patient_adherence(patient_data)</div>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("**New Patient Intake:**")
-        patient_age = st.slider("Patient Age", 18, 90, 65)
-        patient_cost = st.slider("Annual Treatment Cost ($)", 500, 8000, 2000)
-        patient_effects = st.slider("Reported Side Effects", 0, 8, 2)
-        
-        if st.button("▶️ Execute: Predict Adherence Risk", key="btn6"):
-            model = st.session_state.model
+            st.markdown("**Patient Risk Profile:**")
+            st.write(f"Age: {patient_age} years")
+            st.write(f"Annual Cost: ${patient_cost:,}")
+            st.write(f"Side Effects: {patient_effects}")
             
-            new_patient = np.array([[patient_age, patient_cost, patient_effects]])
-            prediction = model.predict(new_patient)[0]
-            probability = model.predict_proba(new_patient)[0]
-            
-            if prediction == 1:
-                st.success(f"LIKELY ADHERENT - Confidence: {probability[1]:.1%}")
-                st.markdown("**Recommendation:** Standard MyWay support program")
-                st.balloons()
+            # Risk factor analysis
+            risk_factors = []
+            if patient_cost > 4000:
+                risk_factors.append("High treatment cost")
+            if patient_effects > 4:
+                risk_factors.append("Multiple side effects")
+            if patient_age > 75:
+                risk_factors.append("Advanced age")
+                
+            if risk_factors:
+                st.warning("**Risk Factors Identified:**")
+                for factor in risk_factors:
+                    st.write(f"• {factor}")
             else:
-                st.error(f"AT RISK FOR NON-ADHERENCE - Confidence: {probability[0]:.1%}")
-                st.markdown("**Recommendation:** Enhanced support with personalized interventions")
-            
-            st.markdown('<div class="success-output">Patient risk assessment complete</div>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("**Patient Risk Profile:**")
-        st.write(f"Age: {patient_age} years")
-        st.write(f"Annual Cost: ${patient_cost:,}")
-        st.write(f"Side Effects: {patient_effects}")
+                st.success("No major risk factors identified")
         
-        # Risk factor analysis
-        risk_factors = []
-        if patient_cost > 4000:
-            risk_factors.append("High treatment cost")
-        if patient_effects > 4:
-            risk_factors.append("Multiple side effects")
-        if patient_age > 75:
-            risk_factors.append("Advanced age")
-            
-        if risk_factors:
-            st.warning("**Risk Factors Identified:**")
-            for factor in risk_factors:
-                st.write(f"• {factor}")
-        else:
-            st.success("No major risk factors identified")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# Impact Summary
-if st.session_state.step5:
-    st.markdown("---")
-    st.markdown("""
-    ## Mission Accomplished: Your AI System is Ready
-    
-    **What You've Built:**
-    - Analyzed 1,000 patient records to identify adherence patterns
-    - Trained an AI model with {:.1%} clinical accuracy  
-    - Created a real-time prediction system for MyWay
-    - Enabled proactive patient interventions
-    
-    **Clinical Impact:**
-    - **Early Risk Detection:** Identify non-adherent patients before treatment failure
-    - **Resource Optimization:** Focus intensive support on high-risk patients
-    - **Improved Outcomes:** Proactive interventions lead to better adherence rates
-    - **Cost Reduction:** Prevent expensive hospitalizations and treatment failures
-    
-    **Next Steps in Real Deployment:**
-    - Integration with Electronic Health Records
-    - Clinical validation studies
-    - Regulatory approval processes
-    - Healthcare provider training programs
-    """.format(st.session_state.get('accuracy', 0)))
+    # Impact Summary
+    if st.session_state.step5:
+        st.markdown("---")
+        st.markdown("""
+        ## Mission Accomplished: Your AI System is Ready
+        
+        **What You've Built:**
+        - Analyzed 1,000 patient records to identify adherence patterns
+        - Trained an AI model with {:.1%} clinical accuracy  
+        - Created a real-time prediction system for MyWay
+        - Enabled proactive patient interventions
+        
+        **Clinical Impact:**
+        - **Early Risk Detection:** Identify non-adherent patients before treatment failure
+        - **Resource Optimization:** Focus intensive support on high-risk patients
+        - **Improved Outcomes:** Proactive interventions lead to better adherence rates
+        - **Cost Reduction:** Prevent expensive hospitalizations and treatment failures
+        
+        **Next Steps in Real Deployment:**
+        - Integration with Electronic Health Records
+        - Clinical validation studies
+        - Regulatory approval processes
+        - Healthcare provider training programs
+        """.format(st.session_state.get('accuracy', 0)))
 
 st.markdown("---")
 st.markdown("*MyWay Drug Adherence AI - Transforming Patient Care Through Data Science*")
